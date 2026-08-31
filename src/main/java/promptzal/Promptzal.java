@@ -1,5 +1,9 @@
-package com.mycompany.promptzal;
+package promptzal;
 
+import utilidades.ManejadorArchivos;
+import analizador.AnalizadorLexico;
+import modelos.ErrorLexico;
+import modelos.Token;
 import java.util.Scanner;
 
 public class Promptzal {

@@ -1,4 +1,7 @@
-package com.mycompany.promptzal;
+package analizador;
+import modelos.ErrorLexico;
+import modelos.Tipos;
+import modelos.Token;
 import java.util.ArrayList;
 import java.util.List;
 

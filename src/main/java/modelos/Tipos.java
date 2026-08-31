@@ -1,4 +1,4 @@
-package com.mycompany.promptzal;
+package modelos;
 
 public class Tipos {
     public static final String DIRECTIVA = "Directiva";

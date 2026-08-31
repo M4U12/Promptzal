@@ -1,18 +1,18 @@
-package com.mycompany.promptzal;
+package modelos;
 
-public class Token {
+public class ErrorLexico {
     private int id;
     private String lexema;
-    private String tipo;
+    private String descripcion;
     private int fila;
     private int columna;
     
-    public Token(int id, String lexema, String tipo, int fila, int col){
+    public ErrorLexico(int id, String lexema, String descripcion, int fila, int columna) {
         this.id = id;
         this.lexema = lexema;
-        this.tipo = tipo;
+        this.descripcion = descripcion;
         this.fila = fila;
-        this.columna = col;
+        this.columna = columna;
     }
     
     public int getId() {
@@ -23,8 +23,8 @@ public class Token {
         return lexema;
     }
 
-    public String getTipo() {
-        return tipo;
+    public String getDescripcion() {
+        return descripcion;
     }
 
     public int getFila() {
@@ -35,15 +35,13 @@ public class Token {
         return columna;
     }
 
-    
     public String obtenerDetalles() {
-        return "Token { " +
+        return "ErrorLexico { " +
                 "ID: " + id +
-                ", Lexema: '" + lexema + '\'' +
-                ", Tipo: '" + tipo + '\'' +
+                ", Carácter: '" + lexema + '\'' +
+                ", Problema: '" + descripcion + '\'' +
                 ", Fila: " + fila +
                 ", Columna: " + columna +
                 " }";
     }
 }
-

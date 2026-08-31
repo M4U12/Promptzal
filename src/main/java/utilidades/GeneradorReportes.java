@@ -1,26 +1,16 @@
-package com.mycompany.promptzal;
+package utilidades;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
-public class ManejadorArchivos {
-    
-    public String leerArchivo(String ruta) {
-        if (!ruta.endsWith(".pz")) {
-            System.out.println("Archivo inválido. El analizador solo acepta archivos '.pz'.");
-            return null;
-        }
-        
-        try {
-            return new String(Files.readAllBytes(Paths.get(ruta)));
-        } catch (IOException e) {
-            System.out.println("Error al leer el archivo: " + e.getMessage());
-            return null;
-        }
-    }
+import modelos.ErrorLexico;
+import modelos.Token;
 
+public class GeneradorReportes {
+    private ManejadorArchivos manejador;
+    
+    public GeneradorReportes() {
+        this.manejador = new ManejadorArchivos();
+    }
+    
     public void generarReporteTokensHTML(List<Token> tokens) {
         StringBuilder html = new StringBuilder();
         html.append("<html><head><title>Reporte de Tokens</title>");
@@ -44,7 +34,7 @@ public class ManejadorArchivos {
         
         html.append("</table></body></html>");
 
-        guardarArchivo("reporte_tokens.html", html.toString());
+        manejador.guardarArchivo("reporte_tokens.html", html.toString());
     }
 
     public void generarReporteErroresHTML(List<ErrorLexico> errores) {
@@ -76,15 +66,10 @@ public class ManejadorArchivos {
         
         html.append("</body></html>");
 
-        guardarArchivo("reporte_errores.html", html.toString());
+        manejador.guardarArchivo("reporte_errores.html", html.toString());
     }
-
-    public void guardarArchivo(String nombreArchivo, String contenido) {
-        try (FileWriter writer = new FileWriter(nombreArchivo)) {
-            writer.write(contenido);
-            System.out.println("Se generó exitosamente el archivo: " + nombreArchivo);
-        } catch (IOException e) {
-            System.out.println("Error al guardar el reporte HTML: " + e.getMessage());
-        }
+    
+    public void generarReporteEstadisticasHTML(List<Token> tokens, List<ErrorLexico> errores) {
+        
     }
 }

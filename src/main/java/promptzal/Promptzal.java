@@ -5,12 +5,14 @@ import analizador.AnalizadorLexico;
 import modelos.ErrorLexico;
 import modelos.Token;
 import java.util.Scanner;
+import utilidades.GeneradorReportes;
 
 public class Promptzal {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        ManejadorArchivos manejador = new ManejadorArchivos();
+        ManejadorArchivos MA = new ManejadorArchivos();
+        GeneradorReportes manejador = new GeneradorReportes();
 
         System.out.println("=========================================");
         System.out.println("   ANALIZADOR LÉXICO - PROMPTZAL");
@@ -22,7 +24,7 @@ public class Promptzal {
         // limpia comillas por si el usuario arrastra el archivo a la consola
         rutaArchivo = rutaArchivo.replace("\"", "");
 
-        String codigoFuente = manejador.leerArchivo(rutaArchivo);
+        String codigoFuente = MA.leerArchivo(rutaArchivo);
 
         if (codigoFuente != null) {
             System.out.println("\nArchivo cargado correctamente. Iniciando análisis...\n");

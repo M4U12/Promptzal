@@ -1,6 +1,9 @@
-com\mycompany\promptzal\ManejadorArchivos.class
-com\mycompany\promptzal\Tipos.class
-com\mycompany\promptzal\ErrorLexico.class
-com\mycompany\promptzal\Promptzal.class
-com\mycompany\promptzal\Token.class
-com\mycompany\promptzal\AnalizadorLexico.class
+utilidades\ManejadorArchivos.class
+utilidades\GeneradorReportes.class
+promptzal\Promptzal.class
+analizador\AnalizadorLexico.class
+modelos\Tipos.class
+promptzal\VentanaPrincipal.class
+modelos\Token.class
+modelos\ErrorLexico.class
+utilidades\GraficadorAFD.class

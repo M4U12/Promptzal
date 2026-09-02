@@ -1,6 +1,9 @@
-C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\com\mycompany\promptzal\AnalizadorLexico.java
-C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\com\mycompany\promptzal\ErrorLexico.java
-C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\com\mycompany\promptzal\ManejadorArchivos.java
-C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\com\mycompany\promptzal\Promptzal.java
-C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\com\mycompany\promptzal\Tipos.java
-C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\com\mycompany\promptzal\Token.java
+C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\analizador\AnalizadorLexico.java
+C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\modelos\ErrorLexico.java
+C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\modelos\Tipos.java
+C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\modelos\Token.java
+C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\promptzal\Promptzal.java
+C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\promptzal\VentanaPrincipal.java
+C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\utilidades\GeneradorReportes.java
+C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\utilidades\GraficadorAFD.java
+C:\Users\ACER\Documents\Lenguajes formales y de programacion\promptzal\src\main\java\utilidades\ManejadorArchivos.java

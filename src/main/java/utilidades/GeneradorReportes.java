@@ -1,5 +1,6 @@
 package utilidades;
 
+import java.util.ArrayList;
 import java.util.List;
 import modelos.ErrorLexico;
 import modelos.Token;
@@ -70,6 +71,66 @@ public class GeneradorReportes {
     }
     
     public void generarReporteEstadisticasHTML(List<Token> tokens, List<ErrorLexico> errores) {
+        StringBuilder html = new StringBuilder();
+        html.append("<html><head><title>Reporte de Estadísticas</title>");
+        html.append("<style>body { font-family: Arial, sans-serif; text-align: center; } ");
+        html.append("table {width: 50%; border-collapse: collapse; margin: 20px auto;} ");
+        html.append("th, td {border: 1px solid black; padding: 8px;} ");
+        html.append("th {background-color: #2196F3; color: white;}</style></head><body>");
         
+        html.append("<h2>Reporte de Estadísticas - PromptZal</h2>");
+        
+        int totalTokens = tokens.size();
+        int totalErrores = errores.size();
+        int totalLineas = 1;
+        
+        // calcular la línea máxima analizada
+        for (Token t : tokens) {
+            if (t.getFila() > totalLineas) totalLineas = t.getFila();
+        }
+        for (ErrorLexico e : errores) {
+            if (e.getFila() > totalLineas) totalLineas = e.getFila();
+        }
+
+        html.append("<div style='margin: 20px; font-size: 16px;'>");
+        html.append("<p><b>Total de Tokens:</b> ").append(totalTokens).append("</p>");
+        html.append("<p><b>Total de Errores Léxicos:</b> ").append(totalErrores).append("</p>");
+        html.append("<p><b>Total de Líneas Analizadas:</b> ").append(totalLineas).append("</p>");
+        html.append("</div>");
+
+        // frecuencia de tokens usando listas paralelas
+        if (totalTokens > 0) {
+            List<String> tipos = new ArrayList<>();
+            List<Integer> cantidades = new ArrayList<>();
+
+            for (Token t : tokens) {
+                String tipoActual = t.getTipo();
+                int indice = tipos.indexOf(tipoActual);
+
+                if (indice == -1) {
+                    // si el tipo no existe en la lista, lo agrega con cantidad 1
+                    tipos.add(tipoActual);
+                    cantidades.add(1);
+                } else {
+                    // si ya existe, se obtiene su cantidad actual, le suma 1 y la actualiza
+                    int cantidadActual = cantidades.get(indice);
+                    cantidades.set(indice, cantidadActual + 1);
+                }
+            }
+            
+            html.append("<table>");
+            html.append("<tr><th>Tipo de Token</th><th>Cantidad (Frecuencia)</th></tr>");
+            
+            for (int i = 0; i < tipos.size(); i++) {
+                html.append("<tr>")
+                    .append("<td>").append(tipos.get(i)).append("</td>")
+                    .append("<td>").append(cantidades.get(i)).append("</td>")
+                    .append("</tr>");
+            }
+            html.append("</table>");
+        }
+        
+        html.append("</body></html>");
+        manejador.guardarArchivo("reporte_estadisticas.html", html.toString());
     }
 }

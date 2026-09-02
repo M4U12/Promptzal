@@ -54,45 +54,205 @@ public class AnalizadorLexico {
     
     
     
-    public void analizar(){
-        while (posicionActual < codigoFuente.length()){
+    public void analizar() {
+        int estado = 0;
+        StringBuilder lexemaActual = new StringBuilder();
+        int filaInicio = filaActual;
+        int colInicio = columnaActual;
+
+        // <= para permitir que el analizador procese el carácter '\0' (fin de archivo)
+        // y pueda aceptar un token si el archivo termina sin un salto de línea.
+        while (posicionActual <= codigoFuente.length()) {
             char actual = obtenerCaracter();
-            
-            // ignorar saltos de línea y espacios en blanco
-            if (actual == ' ' || actual == '\t' || actual == '\n' || actual == '\r'){ 
-                avanzar();
-                continue; 
+
+            // si es el estado inicial y llega al final del archivo, acaba
+            if (actual == '\0' && estado == 0) {
+                break;
             }
-            
-            // guarda las coordenadas de inicio del token
-            int filaInicio = filaActual;
-            int columnaInicio = columnaActual;
-            
-            if (esDelimitador(actual)) {
-                procesarDelimitador(actual, filaInicio, columnaInicio);
-            } 
-            else if (actual == '+' || actual == '=' || actual == '-') {
-                procesarOperadorOConector(actual, filaInicio, columnaInicio);
-            } 
-            else if (actual == '@') {
-                procesarDirectiva(filaInicio, columnaInicio);
-            } 
-            else if (esLetra(actual)) {
-                procesarPalabra(filaInicio, columnaInicio);
-            } 
-            else if (esDigito(actual)) {
-                procesarNumero(filaInicio, columnaInicio);
-            } 
-            else if (actual == '/') {
-                procesarComentarios(filaInicio, columnaInicio);
-            } 
-            else if (actual == '"') {
-                procesarCadena(filaInicio, columnaInicio);
-            } 
-            // si no es nada de lo anterior
-            else {
-                errores.add(new ErrorLexico(contadorErrores++, String.valueOf(actual), "Carácter no reconocido", filaInicio, columnaInicio));
-                avanzar();
+
+            switch (estado) {
+                case 0: // 0: inicial
+                    // ignorar espacios en blanco y saltos de línea
+                    if (actual == ' ' || actual == '\t' || actual == '\n' || actual == '\r') {
+                        avanzar();
+                        continue;
+                    }
+                    if (actual == '\0') break; // seguro contra ciclos infinitos al final
+                    
+                    filaInicio = filaActual;
+                    colInicio = columnaActual;
+                    lexemaActual.setLength(0);
+
+                    if (esLetra(actual)) {
+                        lexemaActual.append(actual);
+                        estado = 1;
+                        avanzar();
+                    } else if (actual == '@') {
+                        lexemaActual.append(actual);
+                        estado = 2;
+                        avanzar();
+                    } else if (esDigito(actual)) {
+                        lexemaActual.append(actual);
+                        estado = 3;
+                        avanzar();
+                    } else if (actual == '"') {
+                        estado = 6;
+                        avanzar();
+                    } else if (actual == '/') {
+                        lexemaActual.append(actual);
+                        estado = 7;
+                        avanzar();
+                    } else if (actual == '-') {
+                        lexemaActual.append(actual);
+                        estado = 11;
+                        avanzar();
+                    } else if (esDelimitador(actual)) {
+                        tokens.add(new Token(contadorTokens++, String.valueOf(actual), Tipos.DELIMITADOR, filaInicio, colInicio));
+                        avanzar();
+                    } else if (actual == '+' || actual == '=') {
+                        tokens.add(new Token(contadorTokens++, String.valueOf(actual), Tipos.OPERADOR, filaInicio, colInicio));
+                        avanzar();
+                    } else {
+                        // registra, avanza y sigue en estado 0
+                        errores.add(new ErrorLexico(contadorErrores++, String.valueOf(actual), "Carácter no reconocido", filaInicio, colInicio));
+                        avanzar();
+                    }
+                    break;
+
+                case 1: // estado 1: identificadores y palabras clave
+                    if (actual != '\0' && (esLetra(actual) || esDigito(actual))) {
+                        lexemaActual.append(actual);
+                        avanzar();
+                    } else {
+                        // estado de aceptacion, no se avanza el caracter aqui
+                        String lexema = lexemaActual.toString();
+                        tokens.add(new Token(contadorTokens++, lexema, clasificarPalabra(lexema), filaInicio, colInicio));
+                        estado = 0;
+                    }
+                    break;
+
+                case 2: // 2: directivas
+                    if (actual != '\0' && esLetra(actual)) {
+                        lexemaActual.append(actual);
+                        avanzar();
+                    } else {
+                        tokens.add(new Token(contadorTokens++, lexemaActual.toString(), Tipos.DIRECTIVA, filaInicio, colInicio));
+                        estado = 0;
+                    }
+                    break;
+
+                case 3: // 3: enteros
+                    if (actual != '\0' && esDigito(actual)) {
+                        lexemaActual.append(actual);
+                        avanzar();
+                    } else if (actual == '.') {
+                        lexemaActual.append(actual);
+                        estado = 4;
+                        avanzar();
+                    } else {
+                        tokens.add(new Token(contadorTokens++, lexemaActual.toString(), Tipos.LITERAL_ENTERO, filaInicio, colInicio));
+                        estado = 0;
+                    }
+                    break;
+
+                case 4: // 4: punto decimal detectado
+                    if (actual != '\0' && esDigito(actual)) {
+                        lexemaActual.append(actual);
+                        estado = 5;
+                        avanzar();
+                    } else {
+                        // error de recuperacion: decimal incompleto 
+                        errores.add(new ErrorLexico(contadorErrores++, lexemaActual.toString(), "Número decimal mal formado", filaInicio, colInicio));
+                        estado = 0;
+                    }
+                    break;
+
+                case 5: // 5: numeros decimales
+                    if (actual != '\0' && esDigito(actual)) {
+                        lexemaActual.append(actual);
+                        avanzar();
+                    } else {
+                        tokens.add(new Token(contadorTokens++, lexemaActual.toString(), Tipos.LITERAL_DECIMAL, filaInicio, colInicio));
+                        estado = 0;
+                    }
+                    break;
+
+                case 6: // 6: cadenas de texto
+                    if (actual == '\0' || actual == '\n') {
+                        errores.add(new ErrorLexico(contadorErrores++, lexemaActual.toString(), "Cadena sin cerrar", filaInicio, colInicio));
+                        estado = 0;
+                    } else if (actual == '"') {
+                        tokens.add(new Token(contadorTokens++, lexemaActual.toString(), Tipos.LITERAL_CADENA, filaInicio, colInicio));
+                        avanzar();
+                        estado = 0;
+                    } else {
+                        lexemaActual.append(actual);
+                        avanzar();
+                    }
+                    break;
+
+                case 7: // 7: diagonal detectada
+                    if (actual == '/') {
+                        lexemaActual.append(actual);
+                        estado = 8;
+                        avanzar();
+                    } else if (actual == '*') {
+                        lexemaActual.append(actual);
+                        estado = 9;
+                        avanzar();
+                    } else {
+                        errores.add(new ErrorLexico(contadorErrores++, lexemaActual.toString(), "Carácter no reconocido (se esperaba '/' o '*')", filaInicio, colInicio));
+                        estado = 0;
+                    }
+                    break;
+
+                case 8: // 8: comentario de linea
+                    if (actual == '\n' || actual == '\0') {
+                        // termina el comentario
+                        estado = 0;
+                    } else {
+                        avanzar();
+                    }
+                    break;
+
+                case 9: // 9: comentario de bloque
+                    if (actual == '\0') {
+                        errores.add(new ErrorLexico(contadorErrores++, lexemaActual.toString(), "Comentario de bloque sin cerrar", filaInicio, colInicio));
+                        estado = 0;
+                    } else if (actual == '*') {
+                        estado = 10;
+                        avanzar();
+                    } else {
+                        avanzar();
+                    }
+                    break;
+
+                case 10: // 10: posible fin de comentario
+                    if (actual == '\0') {
+                        errores.add(new ErrorLexico(contadorErrores++, lexemaActual.toString(), "Comentario de bloque sin cerrar", filaInicio, colInicio));
+                        estado = 0;
+                    } else if (actual == '/') {
+                        avanzar();
+                        estado = 0; // comentario cerrado
+                    } else if (actual == '*') {
+                        avanzar(); 
+                    } else {
+                        estado = 9; 
+                        avanzar();
+                    }
+                    break;
+
+                case 11: // 11: guion detectado
+                    if (actual == '>') {
+                        lexemaActual.append(actual);
+                        tokens.add(new Token(contadorTokens++, lexemaActual.toString(), Tipos.CONECTOR, filaInicio, colInicio));
+                        avanzar();
+                        estado = 0;
+                    } else {
+                        errores.add(new ErrorLexico(contadorErrores++, lexemaActual.toString(), "Se esperaba '>' después de '-'", filaInicio, colInicio));
+                        estado = 0;
+                    }
+                    break;
             }
         }
     }
@@ -138,142 +298,5 @@ public class AnalizadorLexico {
         
         // si no es ninguna palabra clave del lenguaje, por descarte es un nombre de variable o agente
         return Tipos.IDENTIFICADOR;
-    }
-    
-    public void procesarDelimitador(char actual, int fila, int col) {
-        String lexema = String.valueOf(actual);
-        tokens.add(new Token(contadorTokens++, lexema, Tipos.DELIMITADOR, fila, col));
-        avanzar();
-    }
-    
-    public void procesarOperadorOConector(char actual, int fila, int col) {
-        if (actual == '+' || actual == '=') {
-            tokens.add(new Token(contadorTokens++, String.valueOf(actual), Tipos.OPERADOR, fila, col));
-            avanzar();
-        } else if (actual == '-') {
-            avanzar(); // ve el siguiente carácter
-            if (obtenerCaracter() == '>') {
-                tokens.add(new Token(contadorTokens++, "->", Tipos.CONECTOR, fila, col));
-                avanzar(); 
-            } else {
-                errores.add(new ErrorLexico(contadorErrores++, "-", "Se esperaba '>' después de '-'", fila, col));
-            }
-        }
-    }
-
-    public void procesarDirectiva(int fila, int col) {
-        StringBuilder lexemaBuilder = new StringBuilder();
-        lexemaBuilder.append(obtenerCaracter()); // guarda la '@'
-        avanzar();
-        
-        while (posicionActual < codigoFuente.length() && esLetra(obtenerCaracter())) {
-            lexemaBuilder.append(obtenerCaracter());
-            avanzar();
-        }
-        tokens.add(new Token(contadorTokens++, lexemaBuilder.toString(), Tipos.DIRECTIVA, fila, col));
-    }
-
-    public void procesarPalabra(int fila, int col) {
-        StringBuilder lexemaBuilder = new StringBuilder();
-        
-        while (posicionActual < codigoFuente.length() && 
-              (esLetra(obtenerCaracter()) || esDigito(obtenerCaracter()))) {
-            lexemaBuilder.append(obtenerCaracter());
-            avanzar();
-        }
-        
-        String lexema = lexemaBuilder.toString();
-        String tipoToken = clasificarPalabra(lexema); 
-        tokens.add(new Token(contadorTokens++, lexema, tipoToken, fila, col));
-    }
-
-    public void procesarNumero(int fila, int col) {
-        StringBuilder lexemaBuilder = new StringBuilder();
-        boolean tienePunto = false;
-
-        while (posicionActual < codigoFuente.length() && 
-              (esDigito(obtenerCaracter()) || obtenerCaracter() == '.')) {
-            
-            char c = obtenerCaracter();
-            if (c == '.') {
-                if (tienePunto) break; // si ya tenía un punto, rompe el ciclo
-                tienePunto = true;
-            }
-            
-            lexemaBuilder.append(c);
-            avanzar();
-        }
-
-        String lexema = lexemaBuilder.toString();
-        String tipoToken = tienePunto ? Tipos.LITERAL_DECIMAL : Tipos.LITERAL_ENTERO;
-        
-        if (lexema.endsWith(".")) {
-            errores.add(new ErrorLexico(contadorErrores++, lexema, "Número decimal mal formado", fila, col));
-        } else {
-            tokens.add(new Token(contadorTokens++, lexema, tipoToken, fila, col));
-        }
-    }
-
-    public void procesarComentarios(int fila, int col) {
-        avanzar(); // avanza para ver que sigue después de '/'
-        char siguiente = obtenerCaracter();
-        
-        if (siguiente == '/') { // comentario de línea
-            avanzar(); 
-            while (posicionActual < codigoFuente.length() && obtenerCaracter() != '\n') {
-                avanzar();
-            }
-        } 
-        else if (siguiente == '*') { // comentario de bloque
-            avanzar(); 
-            boolean comentarioCerrado = false;
-            
-            while (posicionActual < codigoFuente.length()) {
-                if (obtenerCaracter() == '*' && 
-                    posicionActual + 1 < codigoFuente.length() && 
-                    codigoFuente.charAt(posicionActual + 1) == '/') {
-                    
-                    avanzar(); // consume '*'
-                    avanzar(); // consume '/'
-                    comentarioCerrado = true;
-                    break;
-                }
-                avanzar(); 
-            } 
-            if (!comentarioCerrado) {
-                errores.add(new ErrorLexico(contadorErrores++, "/*", "Comentario de bloque sin cerrar", fila, col));
-            }
-        } 
-        else { // diagonal suelta
-            errores.add(new ErrorLexico(contadorErrores++, "/", "Carácter no reconocido", fila, col));
-        }
-    }
-
-    public void procesarCadena(int fila, int col) {
-        StringBuilder lexemaBuilder = new StringBuilder();
-        lexemaBuilder.append(obtenerCaracter()); // guarda la primera comilla
-        avanzar();
-        
-        boolean cadenaCerrada = false;
-        
-        while (posicionActual < codigoFuente.length()) {
-            char c = obtenerCaracter();
-            lexemaBuilder.append(c);
-            avanzar();
-            
-            if (c == '"') {
-                cadenaCerrada = true;
-                break; 
-            }
-            if (c == '\n') { // no se permiten saltos de línea dentro de la cadena
-                break; 
-            }
-        }
-        
-        if (cadenaCerrada) {
-            tokens.add(new Token(contadorTokens++, lexemaBuilder.toString(), Tipos.LITERAL_CADENA, fila, col));
-        } else {
-            errores.add(new ErrorLexico(contadorErrores++, lexemaBuilder.toString(), "Cadena sin cerrar", fila, col));
-        }
     }
 }

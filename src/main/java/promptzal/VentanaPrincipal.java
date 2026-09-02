@@ -4,12 +4,28 @@
  */
 package promptzal;
 
+import analizador.AnalizadorLexico;
+import modelos.ErrorLexico;
+import modelos.Token;
+import utilidades.ManejadorArchivos;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import java.io.File;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import utilidades.GeneradorReportes;
+
 /**
  *
  * @author ACER
  */
 public class VentanaPrincipal extends javax.swing.JFrame {
-    
+
+    private String rutaArchivoActual;
+    private ManejadorArchivos manejador;
+    private java.util.List<Token> ultimosTokens;
+    private java.util.List<ErrorLexico> ultimosErrores;
+
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(VentanaPrincipal.class.getName());
 
     /**
@@ -17,6 +33,16 @@ public class VentanaPrincipal extends javax.swing.JFrame {
      */
     public VentanaPrincipal() {
         initComponents();
+        manejador = new ManejadorArchivos();
+        configurarTablas();
+    }
+
+    public void configurarTablas() {
+        String[] columnasTokens = {"ID", "Lexema", "Tipo", "Fila", "Columna"};
+        tablaTokens.setModel(new DefaultTableModel(null, columnasTokens));
+
+        String[] columnasErrores = {"ID", "Carácter/Lexema", "Descripción", "Fila", "Columna"};
+        tablaErrores.setModel(new DefaultTableModel(null, columnasErrores));
     }
 
     /**
@@ -28,21 +54,199 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        btnGuardar = new javax.swing.JButton();
+        btnAnalizar = new javax.swing.JButton();
+        btnAbrir = new javax.swing.JButton();
+        btnReportes = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        txtEditor = new javax.swing.JTextArea();
+        tabbedPane = new javax.swing.JTabbedPane();
+        jPanel1 = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        tablaTokens = new javax.swing.JTable();
+        jPane2 = new javax.swing.JPanel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        tablaErrores = new javax.swing.JTable();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        btnGuardar.setText("Guardar");
+        btnGuardar.addActionListener(this::btnGuardarActionPerformed);
+
+        btnAnalizar.setText("Analizar");
+        btnAnalizar.addActionListener(this::btnAnalizarActionPerformed);
+
+        btnAbrir.setText("Abrir archivo");
+        btnAbrir.addActionListener(this::btnAbrirActionPerformed);
+
+        btnReportes.setText("ReportesHTML");
+        btnReportes.addActionListener(this::btnReportesActionPerformed);
+
+        txtEditor.setColumns(20);
+        txtEditor.setRows(5);
+        jScrollPane1.setViewportView(txtEditor);
+
+        tablaTokens.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null}
+            },
+            new String [] {
+                "ID", "Lexema", "Tipo", "Fila", "Columna"
+            }
+        ));
+        jScrollPane2.setViewportView(tablaTokens);
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 802, Short.MAX_VALUE)
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 288, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
+        );
+
+        tabbedPane.addTab("Tokens", jPanel1);
+
+        tablaErrores.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null}
+            },
+            new String [] {
+                "ID", "Lexema", "Descripcion", "Fila", "Columna"
+            }
+        ));
+        jScrollPane3.setViewportView(tablaErrores);
+
+        javax.swing.GroupLayout jPane2Layout = new javax.swing.GroupLayout(jPane2);
+        jPane2.setLayout(jPane2Layout);
+        jPane2Layout.setHorizontalGroup(
+            jPane2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 802, Short.MAX_VALUE)
+        );
+        jPane2Layout.setVerticalGroup(
+            jPane2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 285, Short.MAX_VALUE)
+        );
+
+        tabbedPane.addTab("Errores", jPane2);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addComponent(jScrollPane1)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(btnAbrir)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(btnAnalizar)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btnGuardar)
+                .addGap(18, 18, 18)
+                .addComponent(btnReportes)
+                .addGap(15, 15, 15))
+            .addComponent(tabbedPane, javax.swing.GroupLayout.Alignment.TRAILING)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnGuardar)
+                    .addComponent(btnAbrir)
+                    .addComponent(btnReportes)
+                    .addComponent(btnAnalizar))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 215, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btnAbrirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAbrirActionPerformed
+        JFileChooser chooser = new JFileChooser();
+        FileNameExtensionFilter filtro = new FileNameExtensionFilter("Archivos PromptZal (*.pz)", "pz");
+        chooser.setFileFilter(filtro);
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File archivo = chooser.getSelectedFile();
+            rutaArchivoActual = archivo.getAbsolutePath();
+            String contenido = manejador.leerArchivo(rutaArchivoActual);
+
+            if (contenido != null) {
+                txtEditor.setText(contenido);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al leer el archivo. Verifica que sea .pz");
+            }
+        }
+    }//GEN-LAST:event_btnAbrirActionPerformed
+
+    private void btnAnalizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAnalizarActionPerformed
+        String codigo = txtEditor.getText();
+        if (codigo.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El editor está vacío.");
+            return;
+        }
+
+        AnalizadorLexico analizador = new AnalizadorLexico(codigo);
+        analizador.analizar();
+        ultimosTokens = analizador.getTokens();
+        ultimosErrores = analizador.getErrores();
+
+        // llenar tabla de Tokens
+        DefaultTableModel modeloTokens = (DefaultTableModel) tablaTokens.getModel();
+        modeloTokens.setRowCount(0);
+        for (Token t : analizador.getTokens()) {
+            modeloTokens.addRow(new Object[]{t.getId(), t.getLexema(), t.getTipo(), t.getFila(), t.getColumna()});
+        }
+
+        // llenar tabla de Errores
+        DefaultTableModel modeloErrores = (DefaultTableModel) tablaErrores.getModel();
+        modeloErrores.setRowCount(0);
+        for (ErrorLexico e : analizador.getErrores()) {
+            modeloErrores.addRow(new Object[]{e.getId(), e.getLexema(), e.getDescripcion(), e.getFila(), e.getColumna()});
+        }
+
+        if (!analizador.getErrores().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Se encontraron " + analizador.getErrores().size() + " errores léxicos.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "Análisis exitoso. No hay errores.");
+        }
+    }//GEN-LAST:event_btnAnalizarActionPerformed
+
+    private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
+        if (rutaArchivoActual != null) {
+            manejador.guardarArchivo(rutaArchivoActual, txtEditor.getText());
+            JOptionPane.showMessageDialog(this, "Archivo guardado exitosamente.");
+        } else {
+            JOptionPane.showMessageDialog(this, "Abre un archivo primero para poder guardarlo.");
+        }
+    }//GEN-LAST:event_btnGuardarActionPerformed
+
+    private void btnReportesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnReportesActionPerformed
+        if (ultimosTokens == null || ultimosErrores == null) {
+            JOptionPane.showMessageDialog(this, "Primero debes analizar el código para poder generar los reportes.");
+            return;
+        }
+
+        GeneradorReportes generador = new GeneradorReportes();
+        generador.generarReporteTokensHTML(ultimosTokens);
+        generador.generarReporteErroresHTML(ultimosErrores);
+        generador.generarReporteEstadisticasHTML(ultimosTokens, ultimosErrores);
+
+        JOptionPane.showMessageDialog(this, "¡Los tres reportes HTML fueron generados exitosamente en la carpeta del proyecto!");
+    }//GEN-LAST:event_btnReportesActionPerformed
 
     /**
      * @param args the command line arguments
@@ -70,5 +274,18 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnAbrir;
+    private javax.swing.JButton btnAnalizar;
+    private javax.swing.JButton btnGuardar;
+    private javax.swing.JButton btnReportes;
+    private javax.swing.JPanel jPane2;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JTabbedPane tabbedPane;
+    private javax.swing.JTable tablaErrores;
+    private javax.swing.JTable tablaTokens;
+    private javax.swing.JTextArea txtEditor;
     // End of variables declaration//GEN-END:variables
 }

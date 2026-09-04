@@ -1,13 +1,64 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package utilidades;
 
-/**
- *
- * @author ACER
- */
 public class GraficadorAFD {
-    
+
+    private ManejadorArchivos manejador;
+
+    public GraficadorAFD() {
+        this.manejador = new ManejadorArchivos();
+    }
+
+    public void generarGrafo() {
+        String codigoDOT = construirCodigoDOT();
+        manejador.guardarArchivo("automata_promptzal.dot", codigoDOT);
+        System.out.println("Archivo .dot generado. Pendiente renderizar la imagen.");
+        //pendiente
+    }
+
+    private String construirCodigoDOT() {
+        StringBuilder dot = new StringBuilder();
+        
+        dot.append("digraph AFD {\n");
+        dot.append("    rankdir=LR;\n"); 
+        dot.append("    node [shape = circle, fontname=\"Helvetica\"];\n");
+        dot.append("    edge [fontname=\"Helvetica\", fontsize=10];\n\n");
+        
+        dot.append("    inicio [shape=point];\n");
+        dot.append("    inicio -> S0;\n\n");
+
+        dot.append("    S0 -> S1 [label=\" letra\"];\n");
+        dot.append("    S0 -> S2 [label=\" '@'\"];\n");
+        dot.append("    S0 -> S3 [label=\" dígito\"];\n");
+        dot.append("    S0 -> S6 [label=\" \\\" \"];\n");
+        dot.append("    S0 -> S7 [label=\" '/'\"];\n");
+        dot.append("    S0 -> S11 [label=\" '-'\"];\n");
+        dot.append("    S0 -> S0 [label=\" delimitador \\n operador \\n (espacios)\"];\n\n");
+
+        dot.append("    S1 -> S1 [label=\" letra | dígito\"];\n");
+        dot.append("    S2 -> S2 [label=\" letra\"];\n");
+        dot.append("    S3 -> S3 [label=\" dígito\"];\n");
+        dot.append("    S3 -> S4 [label=\" '.'\"];\n");
+        dot.append("    S4 -> S5 [label=\" dígito\"];\n");
+        dot.append("    S5 -> S5 [label=\" dígito\"];\n\n");
+
+        dot.append("    S6 -> S6 [label=\" distinto de \\\" \"];\n");
+        dot.append("    S6 -> S0 [label=\" \\\" \"];\n\n");
+
+        dot.append("    S7 -> S8 [label=\" '/'\"];\n");
+        dot.append("    S7 -> S9 [label=\" '*'\"];\n");
+        dot.append("    S8 -> S8 [label=\" distinto de \\\\n\"];\n");
+        dot.append("    S8 -> S0 [label=\" \\\\n\"];\n");
+        dot.append("    S9 -> S9 [label=\" distinto de '*'\"];\n");
+        dot.append("    S9 -> S10 [label=\" '*'\"];\n");
+        dot.append("    S10 -> S9 [label=\" distinto de '/'\"];\n");
+        dot.append("    S10 -> S10 [label=\" '*'\"];\n");
+        dot.append("    S10 -> S0 [label=\" '/'\"];\n\n");
+
+        dot.append("    S11 -> S0 [label=\" '>'\"];\n\n");
+
+        dot.append("    node [shape = doublecircle]; S1; S2; S3; S5;\n");
+
+        dot.append("}\n");
+        return dot.toString();
+    }
 }

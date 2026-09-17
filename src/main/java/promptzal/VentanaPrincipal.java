@@ -14,6 +14,7 @@ import javax.swing.table.DefaultTableModel;
 import java.io.File;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import utilidades.GeneradorReportes;
+import utilidades.GraficadorAFD;
 
 /**
  *
@@ -230,7 +231,19 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             manejador.guardarArchivo(rutaArchivoActual, txtEditor.getText());
             JOptionPane.showMessageDialog(this, "Archivo guardado exitosamente.");
         } else {
-            JOptionPane.showMessageDialog(this, "Abre un archivo primero para poder guardarlo.");
+            JFileChooser chooser = new JFileChooser();
+            FileNameExtensionFilter filtro = new FileNameExtensionFilter("Archivos PromptZal (*.pz)", "pz");
+            chooser.setFileFilter(filtro);
+            if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                File archivo = chooser.getSelectedFile();
+                String ruta = archivo.getAbsolutePath();
+                if (!ruta.endsWith(".pz")) {
+                    ruta += ".pz";
+                }
+                rutaArchivoActual = ruta;
+                manejador.guardarArchivo(rutaArchivoActual, txtEditor.getText());
+                JOptionPane.showMessageDialog(this, "Archivo creado y guardado exitosamente.");
+            }
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
@@ -244,34 +257,15 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         generador.generarReporteTokensHTML(ultimosTokens);
         generador.generarReporteErroresHTML(ultimosErrores);
         generador.generarReporteEstadisticasHTML(ultimosTokens, ultimosErrores);
+        GraficadorAFD graficador = new utilidades.GraficadorAFD();
+        graficador.generarGrafo();
 
-        JOptionPane.showMessageDialog(this, "¡Los tres reportes HTML fueron generados exitosamente en la carpeta del proyecto!");
+        JOptionPane.showMessageDialog(this, "¡Reportes HTML e Imagen del Autómata (grafo_afd.png) generados exitosamente en la carpeta del proyecto!");
     }//GEN-LAST:event_btnReportesActionPerformed
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new VentanaPrincipal().setVisible(true));
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAbrir;

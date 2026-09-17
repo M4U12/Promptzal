@@ -60,8 +60,7 @@ public class AnalizadorLexico {
         int filaInicio = filaActual;
         int colInicio = columnaActual;
 
-        // <= para permitir que el analizador procese el carácter '\0' (fin de archivo)
-        // y pueda aceptar un token si el archivo termina sin un salto de línea.
+        // para permitir que el analizador procese el carácter '\0' (fin de archivo)
         while (posicionActual <= codigoFuente.length()) {
             char actual = obtenerCaracter();
 
@@ -106,10 +105,10 @@ public class AnalizadorLexico {
                         lexemaActual.append(actual);
                         estado = 11;
                         avanzar();
-                    } else if (esDelimitador(actual)) {
+                    } else if (esDelimitador(actual)) { //estado de aceptación directa
                         tokens.add(new Token(contadorTokens++, String.valueOf(actual), Tipos.DELIMITADOR, filaInicio, colInicio));
                         avanzar();
-                    } else if (actual == '+' || actual == '=') {
+                    } else if (actual == '+' || actual == '=') { //estado de aceptación directa
                         tokens.add(new Token(contadorTokens++, String.valueOf(actual), Tipos.OPERADOR, filaInicio, colInicio));
                         avanzar();
                     } else {
@@ -124,14 +123,14 @@ public class AnalizadorLexico {
                         lexemaActual.append(actual);
                         avanzar();
                     } else {
-                        // estado de aceptacion, no se avanza el caracter aqui
+                        // estado de aceptacion, vuelve a estado 0
                         String lexema = lexemaActual.toString();
                         tokens.add(new Token(contadorTokens++, lexema, clasificarPalabra(lexema), filaInicio, colInicio));
                         estado = 0;
                     }
                     break;
 
-                case 2: // 2: directivas
+                case 2: // 2: directivas, ya identificó el @
                     if (actual != '\0' && esLetra(actual)) {
                         lexemaActual.append(actual);
                         avanzar();
@@ -179,7 +178,8 @@ public class AnalizadorLexico {
 
                 case 6: // 6: cadenas de texto
                     if (actual == '\0' || actual == '\n') {
-                        errores.add(new ErrorLexico(contadorErrores++, lexemaActual.toString(), "Cadena sin cerrar", filaInicio, colInicio));
+                        lexemaActual.append(actual);
+                        errores.add(new ErrorLexico(contadorErrores++, "\"" + lexemaActual.toString(), "Cadena sin cerrar", filaInicio, colInicio));
                         estado = 0;
                     } else if (actual == '"') {
                         tokens.add(new Token(contadorTokens++, lexemaActual.toString(), Tipos.LITERAL_CADENA, filaInicio, colInicio));

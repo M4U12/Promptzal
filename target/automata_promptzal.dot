@@ -1,0 +1,40 @@
+digraph AFD {
+    rankdir=LR;
+    node [shape = circle, fontname="Helvetica"];
+    edge [fontname="Helvetica", fontsize=10];
+
+    inicio [shape=point];
+    inicio -> S0;
+
+    S0 -> S1 [label=" letra"];
+    S0 -> S2 [label=" '@'"];
+    S0 -> S3 [label=" dígito"];
+    S0 -> S6 [label=" \" "];
+    S0 -> S7 [label=" '/'"];
+    S0 -> S11 [label=" '-'"];
+    S0 -> S0 [label=" delimitador \n operador \n (espacios)"];
+
+    S1 -> S1 [label=" letra | dígito"];
+    S2 -> S2 [label=" letra"];
+    S3 -> S3 [label=" dígito"];
+    S3 -> S4 [label=" '.'"];
+    S4 -> S5 [label=" dígito"];
+    S5 -> S5 [label=" dígito"];
+
+    S6 -> S6 [label=" distinto de \" "];
+    S6 -> S0 [label=" \" "];
+
+    S7 -> S8 [label=" '/'"];
+    S7 -> S9 [label=" '*'"];
+    S8 -> S8 [label=" distinto de \\n"];
+    S8 -> S0 [label=" \\n"];
+    S9 -> S9 [label=" distinto de '*'"];
+    S9 -> S10 [label=" '*'"];
+    S10 -> S9 [label=" distinto de '/'"];
+    S10 -> S10 [label=" '*'"];
+    S10 -> S0 [label=" '/'"];
+
+    S11 -> S0 [label=" '>'"];
+
+    node [shape = doublecircle]; S1; S2; S3; S5;
+}

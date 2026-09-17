@@ -11,8 +11,13 @@ public class GraficadorAFD {
     public void generarGrafo() {
         String codigoDOT = construirCodigoDOT();
         manejador.guardarArchivo("automata_promptzal.dot", codigoDOT);
-        System.out.println("Archivo .dot generado. Pendiente renderizar la imagen.");
-        //pendiente
+        try {
+            ProcessBuilder builder = new ProcessBuilder("dot", "-Tpng", "automata_promptzal.dot", "-o", "grafo_afd.png");
+            builder.start();
+            System.out.println("Imagen del autómata generada exitosamente (grafo_afd.png).");
+        } catch (Exception e) {
+            System.out.println("Error al generar la imagen. Verifica que Graphviz esté instalado. Detalles: " + e.getMessage());
+        }
     }
 
     private String construirCodigoDOT() {

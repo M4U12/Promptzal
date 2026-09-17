@@ -1,6 +1,8 @@
 digraph AFD {
     rankdir=LR;
-    node [shape = circle, fontname="Helvetica"];
+    node [shape = doublecircle, fontname="Helvetica"]; S1; S2; S3; S5; S12; S13; S14;
+    node [shape = circle, style=filled, fillcolor=red, fontcolor=white, fontname="Helvetica"]; ERROR;
+    node [shape = circle, style="", fontcolor=black, fontname="Helvetica"];
     edge [fontname="Helvetica", fontsize=10];
 
     inicio [shape=point];
@@ -12,7 +14,8 @@ digraph AFD {
     S0 -> S6 [label=" \" "];
     S0 -> S7 [label=" '/'"];
     S0 -> S11 [label=" '-'"];
-    S0 -> S0 [label=" delimitador \n operador \n (espacios)"];
+    S0 -> S14 [label=" delimitador \n operador"];
+    S0 -> S0 [label=" (espacios)"];
 
     S1 -> S1 [label=" letra | dígito"];
     S2 -> S2 [label=" letra"];
@@ -22,7 +25,7 @@ digraph AFD {
     S5 -> S5 [label=" dígito"];
 
     S6 -> S6 [label=" distinto de \" "];
-    S6 -> S0 [label=" \" "];
+    S6 -> S12 [label=" \" "];
 
     S7 -> S8 [label=" '/'"];
     S7 -> S9 [label=" '*'"];
@@ -30,11 +33,14 @@ digraph AFD {
     S8 -> S0 [label=" \\n"];
     S9 -> S9 [label=" distinto de '*'"];
     S9 -> S10 [label=" '*'"];
-    S10 -> S9 [label=" distinto de '/'"];
+    S10 -> S9 [label=" distinto de '/' y '*'"];
     S10 -> S10 [label=" '*'"];
     S10 -> S0 [label=" '/'"];
 
-    S11 -> S0 [label=" '>'"];
+    S11 -> S13 [label=" '>'"];
 
-    node [shape = doublecircle]; S1; S2; S3; S5;
+    S0 -> ERROR [label=" no válido"];
+    S4 -> ERROR [label=" distinto de dígito"];
+    S7 -> ERROR [label=" distinto de '/' o '*'"];
+    S11 -> ERROR [label=" distinto de '>'"];
 }

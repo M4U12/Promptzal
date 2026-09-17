@@ -1,7 +1,8 @@
 digraph AFD {
     rankdir=LR;
     node [shape = doublecircle, fontname="Helvetica"]; S1; S2; S3; S5; S12; S13; S14;
-    node [shape = circle, fontname="Helvetica"];
+    node [shape = circle, style=filled, fillcolor=red, fontcolor=white, fontname="Helvetica"]; ERROR;
+    node [shape = circle, style="", fontcolor=black, fontname="Helvetica"];
     edge [fontname="Helvetica", fontsize=10];
 
     inicio [shape=point];
@@ -38,4 +39,8 @@ digraph AFD {
 
     S11 -> S13 [label=" '>'"];
 
+    S0 -> ERROR [label=" no válido"];
+    S4 -> ERROR [label=" distinto de dígito"];
+    S7 -> ERROR [label=" distinto de '/' o '*'"];
+    S11 -> ERROR [label=" distinto de '>'"];
 }

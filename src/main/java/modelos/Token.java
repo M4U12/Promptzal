@@ -36,7 +36,7 @@ public class Token {
     }
 
     
-    public String obtenerDetalles() {
+    public String obtenerasdlles() {
         return "Token { " +
                 "ID: " + id +
                 ", Lexema: '" + lexema + '\'' +

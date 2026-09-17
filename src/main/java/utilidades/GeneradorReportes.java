@@ -27,7 +27,7 @@ public class GeneradorReportes {
         StringBuilder html = new StringBuilder();
         html.append("<html><head><meta charset='UTF-8'><title>Reporte de Tokens</title>");
         html.append(CSS_BASE);
-        html.append("<style>th { background-color: #27ae60; }</style>"); // Verde elegante
+        html.append("<style>th { background-color: #27ae60; }</style>"); // Verde 
         html.append("</head><body><div class='container'>");
         
         html.append("<h2>Reporte de Tokens - PromptZal</h2>");
@@ -53,14 +53,14 @@ public class GeneradorReportes {
         StringBuilder html = new StringBuilder();
         html.append("<html><head><meta charset='UTF-8'><title>Reporte de Errores</title>");
         html.append(CSS_BASE);
-        html.append("<style>th { background-color: #e74c3c; }</style>"); // Rojo elegante
+        html.append("<style>th { background-color: #e74c3c; }</style>"); // Rojo 
         html.append("</head><body><div class='container'>");
         
         html.append("<h2>Reporte de Errores Léxicos - PromptZal</h2>");
         
         if (errores.isEmpty()) {
             html.append("<div style='text-align:center; padding: 40px; background: #eafaf1; border-radius: 8px; border: 1px solid #a3e4d7;'>");
-            html.append("<h3 style='color: #27ae60; margin: 0;'>✓ ¡Felicidades! No se encontraron errores léxicos en el archivo.</h3>");
+            html.append("<h3 style='color: #27ae60; margin: 0;'>✓ No se encontraron errores léxicos en el archivo.</h3>");
             html.append("</div>");
         } else {
             html.append("<table>");
@@ -88,7 +88,7 @@ public class GeneradorReportes {
         html.append("<html><head><meta charset='UTF-8'><title>Reporte de Estadísticas</title>");
         html.append(CSS_BASE);
         html.append("<style>");
-        html.append("th { background-color: #2980b9; }"); // Azul elegante
+        html.append("th { background-color: #2980b9; }"); // Azul 
         html.append(".stats-grid { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 30px; }");
         html.append(".card { flex: 1; background: #fff; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e0e0e0; border-top: 4px solid #2980b9; }");
         html.append(".card h3 { margin: 0; color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }");

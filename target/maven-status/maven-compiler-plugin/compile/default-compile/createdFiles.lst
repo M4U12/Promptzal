@@ -1,5 +1,7 @@
 utilidades\ManejadorArchivos.class
 utilidades\GeneradorReportes.class
+utilidades\Transicion.class
+analizador\LexerPromptZal.class
 promptzal\Promptzal.class
 analizador\AnalizadorLexico.class
 modelos\Tipos.class

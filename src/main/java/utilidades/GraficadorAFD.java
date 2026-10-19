@@ -1,4 +1,4 @@
-package utilidades;
+/*package utilidades;
 
 import analizador.AnalizadorLexico;
 import java.util.ArrayList;
@@ -123,3 +123,4 @@ public class GraficadorAFD {
         return dot.toString();
     }
 }
+*/

@@ -3,9 +3,8 @@ utilidades\GeneradorReportes.class
 utilidades\Transicion.class
 analizador\LexerPromptZal.class
 promptzal\Promptzal.class
-analizador\AnalizadorLexico.class
 modelos\Tipos.class
 promptzal\VentanaPrincipal.class
 modelos\Token.class
 modelos\ErrorLexico.class
-utilidades\GraficadorAFD.class
+analizador\Parser.class

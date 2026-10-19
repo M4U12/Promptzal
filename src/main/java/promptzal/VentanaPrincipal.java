@@ -4,7 +4,8 @@
  */
 package promptzal;
 
-import analizador.AnalizadorLexico;
+import analizador.LexerPromptZal;
+import analizador.Parser;
 import modelos.ErrorLexico;
 import modelos.Token;
 import utilidades.ManejadorArchivos;
@@ -15,13 +16,15 @@ import java.io.File;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import modelos.Tipos;
 import utilidades.GeneradorReportes;
-import utilidades.GraficadorAFD;
+/*import utilidades.GraficadorAFD;*/
 import javax.swing.JTextPane;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.Element;
 import java.awt.Color;
+import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -34,8 +37,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
     private String rutaArchivoActual;
     private ManejadorArchivos manejador;
-    private java.util.List<Token> ultimosTokens;
-    private java.util.List<ErrorLexico> ultimosErrores;
+    private List<Token> ultimosTokens;
+    private List<ErrorLexico> ultimosErrores;
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(VentanaPrincipal.class.getName());
 
@@ -58,28 +61,28 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     }
 
     private void aplicarTemaOscuro() {
-        // 1. Fondo general de la ventana y paneles
+        // Fondo general de la ventana y paneles
         Color fondoPrincipal = new Color(43, 43, 43);
         this.getContentPane().setBackground(fondoPrincipal);
         jPanel1.setBackground(fondoPrincipal);
         jPane2.setBackground(fondoPrincipal);
 
-        // 2. Estilo del Editor (JTextPane)
+        // Estilo del Editor
         txtEditor.setBackground(new Color(30, 30, 30));
         txtEditor.setForeground(new Color(169, 183, 198)); // Texto por defecto gris claro
         txtEditor.setCaretColor(Color.WHITE); // Hace que el cursor titilante sea blanco
 
-        // 3. Estilo de los Botones (Planos y modernos)
+        // 3. Estilo de los Botones 
         Color colorBoton = new Color(77, 77, 77);
         JButton[] botones = {btnAbrir, btnAnalizar, btnGuardar, btnReportes};
         for (JButton btn : botones) {
             btn.setBackground(colorBoton);
             btn.setForeground(Color.WHITE);
-            btn.setFocusPainted(false); // Quita el borde feo al hacer clic
+            btn.setFocusPainted(false); 
             btn.setBorderPainted(false);
         }
 
-        // 4. Estilo de las Tablas (Oscuras con texto claro)
+        // Estilo de las Tablas 
         Color colorFondoTabla = new Color(60, 63, 65);
         Color colorTextoTabla = new Color(187, 187, 187);
 
@@ -88,7 +91,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         jScrollPane3.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         jScrollPane4.setBorder(javax.swing.BorderFactory.createEmptyBorder());
 
-        // 6. Estilizar el panel de pestañas (JTabbedPane)
+        // Estilizar el panel de pestañas 
         tabbedPane.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         tabbedPane.setBackground(new Color(60, 63, 65)); // Fondo de las pestañas inactivas
         tabbedPane.setForeground(Color.WHITE); // Texto de las pestañas
@@ -151,16 +154,15 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         Style estiloError = editor.addStyle("Error", null);
         StyleConstants.setForeground(estiloError, Color.red);
 
-        // 1. Limpiar el formato actual
+        // Limpia el formato actual
         doc.setCharacterAttributes(0, doc.getLength(), estiloNormal, true);
 
-        // 2. Pintar cada token
+        //Pinta cada token
         Element root = doc.getDefaultRootElement();
         for (Token t : tokens) {
             Style estiloAplicar = estiloNormal;
 
             switch (t.getTipo()) {
-                // Palabras estructurales separadas según el PDF
                 case "AGENTE":
                 case "CONTEXTO":
                 case "VARIABLE":
@@ -197,7 +199,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                     estiloAplicar = estiloNumero;
                     break;
 
-                // Símbolos y operadores (ahora separados según el PDF)
+                // Símbolos y operadores 
                 case "FLECHA":
                 case "IGUAL":
                 case "MAS":
@@ -221,7 +223,6 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 try {
                     int offsetInicioLinea = root.getElement(e.getFila() - 1).getStartOffset();
                     int offsetAbsoluto = offsetInicioLinea + (e.getColumna() - 1);
-                    // Usamos el estiloError (rojo) para el lexema que falló
                     doc.setCharacterAttributes(offsetAbsoluto, e.getLexema().length(), estiloError, true);
                 } catch (Exception ex) {
                 }
@@ -240,7 +241,6 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 int offsetAbsoluto = offsetInicioLinea + (t.getColumna() - 1);
                 doc.setCharacterAttributes(offsetAbsoluto, t.getLexema().length(), estiloAplicar, true);
             } catch (Exception e) {
-                // Previene bloqueos si hay desfases por saltos de línea del JTextPane
             }
         }
     }
@@ -398,11 +398,10 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         }
 
         try {
-            // 1. Instanciamos el nuevo Lexer generado por JFlex
-            java.io.StringReader reader = new java.io.StringReader(codigo);
-            analizador.LexerPromptZal lexer = new analizador.LexerPromptZal(reader);
+            StringReader reader = new StringReader(codigo);
+            LexerPromptZal lexer = new LexerPromptZal(reader);
 
-            // 2. Leemos todos los tokens hasta que el Lexer reporte el fin de archivo (EOF)
+            // Lee todos los tokens hasta el EOF
             while (true) {
                 Token token = lexer.yylex();
                 if (token == null || token.getTipo().equals("EOF")) {
@@ -410,36 +409,44 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 }
             }
 
-            // 3. Guardamos los resultados temporalmente (como lo tenías antes)
-            ultimosTokens = lexer.getTokens();
-            ultimosErrores = lexer.getErrores();
+            // Pinta los colores 
+            aplicarColoresSintaxis(txtEditor, lexer.getTokens(), lexer.getErrores(), lexer.getComentarios());
 
-            // 4. Pintamos los colores. 
-            // OJO: Le pasamos una lista vacía para los comentarios por ahora.
-            aplicarColoresSintaxis(txtEditor, lexer.getTokens(), lexer.getErrores(), new java.util.ArrayList<>());
-
-            // 5. Llenar tabla de Tokens
+            // Llenar tabla de Tokens
             DefaultTableModel modeloTokens = (DefaultTableModel) tablaTokens.getModel();
             modeloTokens.setRowCount(0);
             for (Token t : lexer.getTokens()) {
                 modeloTokens.addRow(new Object[]{t.getId(), t.getLexema(), t.getTipo(), t.getFila(), t.getColumna()});
             }
 
-            // 6. Llenar tabla de Errores
+            // Ejecución del análisis sintáctico con los tokens obtenidos
+            Parser parser = new Parser(lexer.getTokens());
+            parser.parsePrograma();
+
+            // Combinación de errores léxicos y sintácticos
+            List<ErrorLexico> todosLosErrores = new ArrayList<>();
+            todosLosErrores.addAll(lexer.getErrores());
+            todosLosErrores.addAll(parser.getErroresSintacticos());
+            
+            // Guardado para reportes HTML
+            ultimosTokens = lexer.getTokens(); 
+            ultimosErrores = todosLosErrores; 
+
+            //Llenado de la tabla de Errores con la lista combinada
             DefaultTableModel modeloErrores = (DefaultTableModel) tablaErrores.getModel();
             modeloErrores.setRowCount(0);
-            for (ErrorLexico e : lexer.getErrores()) {
+            for (ErrorLexico e : todosLosErrores) {
                 modeloErrores.addRow(new Object[]{e.getId(), e.getLexema(), e.getDescripcion(), e.getFila(), e.getColumna()});
             }
 
-            if (!lexer.getErrores().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Se encontraron " + lexer.getErrores().size() + " errores léxicos.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+            if (!todosLosErrores.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Se encontraron " + todosLosErrores.size() + " errores (Léxicos y/o Sintácticos).", "Advertencia", JOptionPane.WARNING_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this, "Análisis Léxico exitoso con JFlex. No hay errores.");
+                JOptionPane.showMessageDialog(this, "Análisis Léxico y Sintáctico exitoso. No hay errores.");
             }
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error al ejecutar el analizador léxico: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Error al ejecutar el analizador: " + ex.getMessage());
         }
     }//GEN-LAST:event_btnAnalizarActionPerformed
 
@@ -474,8 +481,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         generador.generarReporteTokensHTML(ultimosTokens);
         generador.generarReporteErroresHTML(ultimosErrores);
         generador.generarReporteEstadisticasHTML(ultimosTokens, ultimosErrores);
-        GraficadorAFD graficador = new utilidades.GraficadorAFD();
-        graficador.generarGrafo();
+        /*GraficadorAFD graficador = new utilidades.GraficadorAFD();
+        graficador.generarGrafo();*/
 
         JOptionPane.showMessageDialog(this, "¡Reportes HTML e Imagen del Autómata (grafo_afd.png) generados exitosamente en la carpeta del proyecto!");
     }//GEN-LAST:event_btnReportesActionPerformed

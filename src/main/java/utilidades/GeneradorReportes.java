@@ -2,7 +2,7 @@ package utilidades;
 
 import java.util.ArrayList;
 import java.util.List;
-import modelos.ErrorLexico;
+import modelos.ErrorCompilacion;
 import modelos.Token;
 
 public class GeneradorReportes {
@@ -49,7 +49,7 @@ public class GeneradorReportes {
         manejador.guardarArchivo("reporte_tokens.html", html.toString());
     }
 
-    public void generarReporteErroresHTML(List<ErrorLexico> errores) {
+    public void generarReporteErroresHTML(List<ErrorCompilacion> errores) {
         StringBuilder html = new StringBuilder();
         html.append("<html><head><meta charset='UTF-8'><title>Reporte de Errores</title>");
         html.append(CSS_BASE);
@@ -66,7 +66,7 @@ public class GeneradorReportes {
             html.append("<table>");
             html.append("<tr><th class='text-center'>#</th><th>Carácter/Lexema</th><th>Descripción</th><th class='text-center'>Fila</th><th class='text-center'>Columna</th></tr>");
 
-            for (ErrorLexico e : errores) {
+            for (ErrorCompilacion e : errores) {
                 html.append("<tr>")
                     .append("<td class='text-center'><strong>").append(e.getId()).append("</strong></td>")
                     .append("<td><code style='color: #c0392b; background: #fadbd8; padding: 2px 6px; border-radius: 4px;'>").append(e.getLexema()).append("</code></td>")
@@ -83,7 +83,7 @@ public class GeneradorReportes {
         manejador.guardarArchivo("reporte_errores.html", html.toString());
     }
     
-    public void generarReporteEstadisticasHTML(List<Token> tokens, List<ErrorLexico> errores) {
+    public void generarReporteEstadisticasHTML(List<Token> tokens, List<ErrorCompilacion> errores) {
         StringBuilder html = new StringBuilder();
         html.append("<html><head><meta charset='UTF-8'><title>Reporte de Estadísticas</title>");
         html.append(CSS_BASE);
@@ -105,7 +105,7 @@ public class GeneradorReportes {
         for (Token t : tokens) {
             if (t.getFila() > totalLineas) totalLineas = t.getFila();
         }
-        for (ErrorLexico e : errores) {
+        for (ErrorCompilacion e : errores) {
             if (e.getFila() > totalLineas) totalLineas = e.getFila();
         }
 

@@ -8,12 +8,16 @@ public class Agente {
     private String contexto;
     private List<Variable> variables;
     private List<Comando> comandos;
+    private int fila;
+    private int columna;
 
-    public Agente(String nombre, String contexto, List<Variable> variables, List<Comando> comandos) {
+    public Agente(String nombre, String contexto, List<Variable> variables, List<Comando> comandos, int fila, int columna) {
         this.nombre = nombre;
         this.contexto = contexto;
         this.variables = variables;
         this.comandos = comandos;
+        this.fila = fila;
+        this.columna = columna;
     }
 
     public String getNombre() {
@@ -30,5 +34,13 @@ public class Agente {
 
     public List<Comando> getComandos() {
         return comandos;
+    }
+
+    public int getFila() {
+        return fila;
+    }
+
+    public int getColumna() {
+        return columna;
     }
 }

@@ -1,20 +1,19 @@
 package analizador;
 
-import modelos.ErrorLexico;
+import ast.*;
+import modelos.ErrorCompilacion;
 import modelos.Token;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
-import ast.*;
 
 public class Parser {
 
     private List<Token> tokens;
     private int puntero;
     private Token tokenActual;
-    private List<ErrorLexico> erroresSintacticos; // Lista para almacenar los errores detectados
+    private List<ErrorCompilacion> erroresSintacticos;
 
-    // Conjunto de tokens que permiten retomar el análisis tras un error
     private static final List<String> TOKENS_SINCRONIZACION = Arrays.asList(
             "AGENTE", "LLAVE_C", "COMANDO_IA", "VARIABLE", "EJECUTAR", "EXPORTAR", "EOF"
     );
@@ -28,22 +27,19 @@ public class Parser {
         }
     }
 
-    public List<ErrorLexico> getErroresSintacticos() {
+    public List<ErrorCompilacion> getErroresSintacticos() {
         return erroresSintacticos;
     }
 
-    // Avanza el puntero al siguiente token de la lista
     private void avanzar() {
         puntero++;
         if (puntero < tokens.size()) {
             tokenActual = tokens.get(puntero);
         } else {
-            // Generación de un token EOF artificial para prevenir desbordamientos
             tokenActual = new Token(0, "EOF", "EOF", 0, 0);
         }
     }
 
-    // Verifica si el token actual coincide con el esperado, si no, invoca el modo pánico
     private boolean match(String tipoEsperado) {
         if (tokenActual != null && tokenActual.getTipo().equals(tipoEsperado)) {
             avanzar();
@@ -54,64 +50,93 @@ public class Parser {
         }
     }
 
-    // Registra el error y descarta tokens hasta encontrar uno de sincronización
     private void manejarErrorSintactico(String tipoEsperado) {
-        String descripcion = "Se esperaba [" + tipoEsperado + "] pero se encontró [" + tokenActual.getLexema() + "]";
+        String descripcion = "Se esperaba [" + tipoEsperado + "] pero se encontró [" + (tokenActual != null ? tokenActual.getLexema() : "null") + "]";
+        int filaError = tokenActual != null ? tokenActual.getFila() : 0;
+        int colError = tokenActual != null ? tokenActual.getColumna() : 0;
+        String lexemaError = tokenActual != null ? tokenActual.getLexema() : "EOF";
 
-        erroresSintacticos.add(new ErrorLexico(
+        erroresSintacticos.add(new ErrorCompilacion(
                 erroresSintacticos.size() + 1,
-                tokenActual.getLexema(),
-                "SINTÁCTICO: " + descripcion,
-                tokenActual.getFila(),
-                tokenActual.getColumna()
+                lexemaError,
+                "SINTÁCTICO",
+                descripcion,
+                filaError,
+                colError
         ));
 
-        // Modo Pánico: avanza hasta encontrar un token seguro o el fin de archivo
         while (tokenActual != null && !TOKENS_SINCRONIZACION.contains(tokenActual.getTipo()) && !tokenActual.getTipo().equals("EOF")) {
             avanzar();
         }
     }
 
     // Regla: <programa> -> <directivas> <agentes> <ejecuciones> <exportar> EOF
-    public void parsePrograma() {
-        parseDirectivas();
-        parseAgentes();
-        parseEjecuciones();
-        parseExportar();
+    public Programa parsePrograma() {
+        List<Directiva> directivas = parseDirectivas();
+        List<Agente> agentes = parseAgentes();
+        List<String> ejecuciones = parseEjecuciones();
+        List<String> exportaciones = parseExportar();
         match("EOF");
+
+        return new Programa(directivas, agentes, ejecuciones, exportaciones);
     }
 
     // Regla: <directivas> -> DIRECTIVA CADENA <directivas> | ε
-    private void parseDirectivas() {
+    private List<Directiva> parseDirectivas() {
+        List<Directiva> lista = new ArrayList<>();
         if (tokenActual != null && tokenActual.getTipo().equals("DIRECTIVA")) {
+            String nombre = tokenActual.getLexema();
             match("DIRECTIVA");
+
+            String valor = "";
+            if (tokenActual != null && tokenActual.getTipo().equals("CADENA")) {
+                valor = tokenActual.getLexema();
+            }
             match("CADENA");
-            parseDirectivas();
+
+            lista.add(new Directiva(nombre, valor));
+            lista.addAll(parseDirectivas());
         }
+        return lista;
     }
 
     // Regla: <agentes> -> <agente> <mas_agentes>
-    private void parseAgentes() {
-        parseAgente();
-        parseMasAgentes();
+    private List<Agente> parseAgentes() {
+        List<Agente> lista = new ArrayList<>();
+        Agente ag = parseAgente();
+        if (ag != null) {
+            lista.add(ag);
+        }
+        lista.addAll(parseMasAgentes());
+        return lista;
     }
 
     // Regla: <mas_agentes> -> <agente> <mas_agentes> | ε
-    private void parseMasAgentes() {
+    private List<Agente> parseMasAgentes() {
+        List<Agente> lista = new ArrayList<>();
         if (tokenActual != null && tokenActual.getTipo().equals("AGENTE")) {
-            parseAgente();
-            parseMasAgentes();
+            Agente ag = parseAgente();
+            if (ag != null) {
+                lista.add(ag);
+            }
+            lista.addAll(parseMasAgentes());
         }
+        return lista;
     }
 
     // Regla: <agente> -> AGENTE ID LLAVE_A <contexto> <variables> <comandos> LLAVE_C
     private Agente parseAgente() {
+        int fila = tokenActual != null ? tokenActual.getFila() : 0;
+        int columna = tokenActual != null ? tokenActual.getColumna() : 0;
+
         match("AGENTE");
+
         String nombre = "";
         if (tokenActual != null && tokenActual.getTipo().equals("ID")) {
             nombre = tokenActual.getLexema();
         }
         match("ID");
+
         match("LLAVE_A");
 
         String contexto = parseContexto();
@@ -120,18 +145,22 @@ public class Parser {
 
         match("LLAVE_C");
 
-        return new Agente(nombre, contexto, variables, comandos);
+        // Si falló catastróficamente al recuperar el nombre, devolvemos null, sino armamos el nodo
+        if (nombre.isEmpty()) {
+            return null;
+        }
+        return new Agente(nombre, contexto, variables, comandos, fila, columna);
     }
 
     // Regla: <contexto> -> CONTEXTO IGUAL CADENA
     private String parseContexto() {
         match("CONTEXTO");
         match("IGUAL");
+
         String valor = "";
         if (tokenActual != null && tokenActual.getTipo().equals("CADENA")) {
             valor = tokenActual.getLexema();
         }
-
         match("CADENA");
 
         return valor;
@@ -139,84 +168,94 @@ public class Parser {
 
     // Regla: <variables> -> VARIABLE ID IGUAL <expresion> <variables> | ε
     private List<Variable> parseVariables() {
-        List<Variable> listaVariables = new ArrayList<>();
+        List<Variable> lista = new ArrayList<>();
 
         if (tokenActual != null && tokenActual.getTipo().equals("VARIABLE")) {
+            int fila = tokenActual.getFila();
+            int columna = tokenActual.getColumna();
+
             match("VARIABLE");
+
             String nombre = "";
-            if (tokenActual.getTipo().equals("ID")) {
+            if (tokenActual != null && tokenActual.getTipo().equals("ID")) {
                 nombre = tokenActual.getLexema();
             }
             match("ID");
+
             match("IGUAL");
 
-            String valor = parseExpresion();
+            Expresion valorExpresion = parseExpresion();
 
-            listaVariables.add(new Variable(nombre, valor));
-            listaVariables.addAll(parseVariables());
+            if (!nombre.isEmpty()) {
+                lista.add(new Variable(nombre, valorExpresion, fila, columna));
+            }
+
+            lista.addAll(parseVariables());
         }
-
-        // Si entra por la rama Épsilon, simplemente devuelve la lista vacía
-        return listaVariables;
+        return lista;
     }
 
     // Regla: <comandos> -> <comando> <mas_comandos>
     private List<Comando> parseComandos() {
-        List<Comando> listaComandos = new ArrayList<>();
-        listaComandos.add(parseComando()); // El primer comando es obligatorio
-        listaComandos.addAll(parseMasComandos());
-        return listaComandos;
+        List<Comando> lista = new ArrayList<>();
+        Comando cmd = parseComando();
+        if (cmd != null) {
+            lista.add(cmd);
+        }
+        lista.addAll(parseMasComandos());
+        return lista;
     }
 
     // Regla: <mas_comandos> -> <comando> <mas_comandos> | ε
     private List<Comando> parseMasComandos() {
         List<Comando> lista = new ArrayList<>();
         if (tokenActual != null && tokenActual.getTipo().equals("COMANDO_IA")) {
-            lista.add(parseComando());
+            Comando cmd = parseComando();
+            if (cmd != null) {
+                lista.add(cmd);
+            }
             lista.addAll(parseMasComandos());
         }
-        return lista; // Si es Épsilon, devuelve la lista vacía
+        return lista;
     }
 
     // Regla: <comando> -> COMANDO_IA <expresion> <conectores> FLECHA ID
     private Comando parseComando() {
-        // atrapa el tipo de instrucción (PREGUNTAR, GENERAR, etc.)
+        int fila = tokenActual != null ? tokenActual.getFila() : 0;
+        int columna = tokenActual != null ? tokenActual.getColumna() : 0;
+
         String tipoInstruccion = "";
         if (tokenActual != null && tokenActual.getTipo().equals("COMANDO_IA")) {
             tipoInstruccion = tokenActual.getLexema();
         }
         match("COMANDO_IA");
-        
-        // atrapa el argumento principal
-        String expresionBase = parseExpresion();
-        
-        // atrapa todos los conectores extra
+
+        Expresion expresionBase = parseExpresion();
         List<Conector> conectores = parseConectores();
-        
+
         match("FLECHA");
-        
-        // atrapa dónde se guarda el resultado
+
         String variableDestino = "";
         if (tokenActual != null && tokenActual.getTipo().equals("ID")) {
             variableDestino = tokenActual.getLexema();
         }
         match("ID");
-        
-        // retorna el nodo Comando ya armado
-        return new Comando(tipoInstruccion, expresionBase, conectores, variableDestino);
+
+        if (tipoInstruccion.isEmpty()) {
+            return null;
+        }
+        return new Comando(tipoInstruccion, expresionBase, conectores, variableDestino, fila, columna);
     }
 
     // Regla: <conectores> -> CONECTOR <expresion> <conectores> | ε
     private List<Conector> parseConectores() {
         List<Conector> lista = new ArrayList<>();
         if (tokenActual != null && tokenActual.getTipo().equals("CONECTOR")) {
-            // atrapa la palabra (SOBRE, DESDE, EN...)
-            String tipo = tokenActual.getLexema(); 
+            String tipo = tokenActual.getLexema();
             match("CONECTOR");
-            
-            // atrapa el valor que acompaña al conector
-            String expresion = parseExpresion(); 
-            
+
+            Expresion expresion = parseExpresion();
+
             lista.add(new Conector(tipo, expresion));
             lista.addAll(parseConectores());
         }
@@ -224,31 +263,42 @@ public class Parser {
     }
 
     // Regla: <expresion> -> <termino> <mas_terminos>
-    private String parseExpresion() {
-        String termino = parseTermino();
-        String masTerminos = parseMasTerminos();
-        // concatena las partes en un solo texto (por ejemplo "100" + " palabras")
-        return termino + masTerminos; 
+    private Expresion parseExpresion() {
+        List<Termino> listaTerminos = new ArrayList<>();
+        Termino termino = parseTermino();
+        if (termino != null) {
+            listaTerminos.add(termino);
+        }
+
+        listaTerminos.addAll(parseMasTerminos());
+        return new Expresion(listaTerminos);
     }
 
     // Regla: <mas_terminos> -> MAS <termino> <mas_terminos> | ε
-    private String parseMasTerminos() {
+    private List<Termino> parseMasTerminos() {
+        List<Termino> lista = new ArrayList<>();
         if (tokenActual != null && tokenActual.getTipo().equals("MAS")) {
             match("MAS");
-            String termino = parseTermino();
-            String masTerminos = parseMasTerminos();
-            // se le agrega el ' + ' literal para que el texto sea legible
-            return " + " + termino + masTerminos;
+            Termino termino = parseTermino();
+            if (termino != null) {
+                lista.add(termino);
+            }
+            lista.addAll(parseMasTerminos());
         }
-        return "";
+        return lista;
     }
 
     // Regla: <termino> -> CADENA | ID | NUMERO <unidad> | <cargar>
-    private String parseTermino() {
-        if (tokenActual == null) return "";
+    private Termino parseTermino() {
+        if (tokenActual == null) {
+            return null;
+        }
 
         String tipo = tokenActual.getTipo();
         String valor = "";
+        String unidad = "";
+        int fila = tokenActual.getFila();
+        int columna = tokenActual.getColumna();
 
         if (tipo.equals("CADENA") || tipo.equals("ID")) {
             valor = tokenActual.getLexema();
@@ -256,13 +306,15 @@ public class Parser {
         } else if (tipo.equals("NUMERO")) {
             valor = tokenActual.getLexema();
             match("NUMERO");
-            valor += parseUnidad(); // se le pega la unidad si es que trae
+            unidad = parseUnidad();
         } else if (tipo.equals("CARGAR")) {
             valor = parseCargar();
         } else {
             manejarErrorSintactico("CADENA, ID, NUMERO o CARGAR");
+            return null;
         }
-        return valor;
+
+        return new Termino(tipo, valor, unidad, fila, columna);
     }
 
     // Regla: <unidad> -> ID | ε
@@ -270,7 +322,7 @@ public class Parser {
         if (tokenActual != null && tokenActual.getTipo().equals("ID")) {
             String unidad = tokenActual.getLexema();
             match("ID");
-            return " " + unidad; 
+            return unidad;
         }
         return "";
     }
@@ -279,50 +331,73 @@ public class Parser {
     private String parseCargar() {
         match("CARGAR");
         match("PAR_A");
-        
+
         String archivo = "";
-        // soporta la regla flexible (ID o CADENA)
-        if (tokenActual != null && (tokenActual.getTipo().equals("CADENA") || tokenActual.getTipo().equals("ID"))) {
+        // Corregido: La gramática estricta del proyecto solo permite CADENA
+        if (tokenActual != null && tokenActual.getTipo().equals("CADENA")) {
             archivo = tokenActual.getLexema();
-            if (tokenActual.getTipo().equals("CADENA")) match("CADENA");
-            else match("ID");
+            match("CADENA");
         } else {
-            manejarErrorSintactico("CADENA o ID");
+            manejarErrorSintactico("CADENA");
         }
-        
+
         match("PAR_C");
-        return "CARGAR(" + archivo + ")"; // Guarda la instrucción como texto
+        return "CARGAR(" + archivo + ")";
     }
 
     // Regla: <ejecuciones> -> EJECUTAR ID <mas_ejecuciones>
-    private void parseEjecuciones() {
+    private List<String> parseEjecuciones() {
+        List<String> lista = new ArrayList<>();
         match("EJECUTAR");
+
+        if (tokenActual != null && tokenActual.getTipo().equals("ID")) {
+            lista.add(tokenActual.getLexema());
+        }
         match("ID");
-        parseMasEjecuciones();
+
+        lista.addAll(parseMasEjecuciones());
+        return lista;
     }
 
     // Regla: <mas_ejecuciones> -> EJECUTAR ID <mas_ejecuciones> | ε
-    private void parseMasEjecuciones() {
+    private List<String> parseMasEjecuciones() {
+        List<String> lista = new ArrayList<>();
         if (tokenActual != null && tokenActual.getTipo().equals("EJECUTAR")) {
             match("EJECUTAR");
+            if (tokenActual != null && tokenActual.getTipo().equals("ID")) {
+                lista.add(tokenActual.getLexema());
+            }
             match("ID");
-            parseMasEjecuciones();
+            lista.addAll(parseMasEjecuciones());
         }
+        return lista;
     }
 
     // Regla: <exportar> -> EXPORTAR ID <mas_ids>
-    private void parseExportar() {
+    private List<String> parseExportar() {
+        List<String> lista = new ArrayList<>();
         match("EXPORTAR");
+
+        if (tokenActual != null && tokenActual.getTipo().equals("ID")) {
+            lista.add(tokenActual.getLexema());
+        }
         match("ID");
-        parseMasIds();
+
+        lista.addAll(parseMasIds());
+        return lista;
     }
 
     // Regla: <mas_ids> -> COMA ID <mas_ids> | ε
-    private void parseMasIds() {
+    private List<String> parseMasIds() {
+        List<String> lista = new ArrayList<>();
         if (tokenActual != null && tokenActual.getTipo().equals("COMA")) {
             match("COMA");
+            if (tokenActual != null && tokenActual.getTipo().equals("ID")) {
+                lista.add(tokenActual.getLexema());
+            }
             match("ID");
-            parseMasIds();
+            lista.addAll(parseMasIds());
         }
+        return lista;
     }
 }

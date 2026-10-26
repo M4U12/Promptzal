@@ -5,7 +5,7 @@
 package analizador;
 
 import modelos.Token;
-import modelos.ErrorLexico;
+import modelos.ErrorCompilacion;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -380,7 +380,7 @@ public class LexerPromptZal {
 
   /* user code: */
     private List<Token> tokens = new ArrayList<>();
-    private List<ErrorLexico> errores = new ArrayList<>();
+    private List<ErrorCompilacion> errores = new ArrayList<>();
     private List<Token> comentarios = new ArrayList<>();
     private int contadorTokens = 1;
     private int contadorErrores = 1;
@@ -389,7 +389,7 @@ public class LexerPromptZal {
         return tokens;
     }
 
-    public List<ErrorLexico> getErrores() {
+    public List<ErrorCompilacion> getErrores() {
         return errores;
     }  
 
@@ -817,7 +817,7 @@ public class LexerPromptZal {
       else {
         switch (zzAction < 0 ? zzAction : ZZ_ACTION[zzAction]) {
           case 1:
-            { errores.add(new ErrorLexico(contadorErrores++, yytext(), "Caracter no reconocido", yyline + 1, yycolumn + 1));
+            { errores.add(new ErrorCompilacion(contadorErrores++, yytext(), "LÉXICO", "Caracter no reconocido", yyline + 1, yycolumn + 1));
             }
           // fall through
           case 24: break;

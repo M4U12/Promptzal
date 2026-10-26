@@ -4,23 +4,27 @@ import java.util.List;
 
 public class Comando {
 
-    private String tipoInstruccion; // Ej: "PREGUNTAR", "RESUMIR"
-    private String expresionBase;   // Ej: "Cuales son las tendencias"
+    private String tipoInstruccion;
+    private Expresion expresionBase;
     private List<Conector> conectores;
-    private String variableDestino; // Ej: "tendencias" (lo que va después de la flecha ->)
+    private String variableDestino;
+    private int fila;
+    private int columna;
 
-    public Comando(String tipoInstruccion, String expresionBase, List<Conector> conectores, String variableDestino) {
+    public Comando(String tipoInstruccion, Expresion expresionBase, List<Conector> conectores, String variableDestino, int fila, int columna) {
         this.tipoInstruccion = tipoInstruccion;
         this.expresionBase = expresionBase;
         this.conectores = conectores;
         this.variableDestino = variableDestino;
+        this.fila = fila;
+        this.columna = columna;
     }
 
     public String getTipoInstruccion() {
         return tipoInstruccion;
     }
 
-    public String getExpresionBase() {
+    public Expresion getExpresionBase() {
         return expresionBase;
     }
 
@@ -30,5 +34,13 @@ public class Comando {
 
     public String getVariableDestino() {
         return variableDestino;
+    }
+
+    public int getFila() {
+        return fila;
+    }
+
+    public int getColumna() {
+        return columna;
     }
 }

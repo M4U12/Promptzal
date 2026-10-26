@@ -2,10 +2,10 @@ package ast;
 
 public class Conector {
 
-    private String tipoConector; // Ej: "SOBRE", "EN", "DESDE"
-    private String expresion;    // Ej: "ventas"
+    private String tipoConector;
+    private Expresion expresion;
 
-    public Conector(String tipoConector, String expresion) {
+    public Conector(String tipoConector, Expresion expresion) {
         this.tipoConector = tipoConector;
         this.expresion = expresion;
     }
@@ -14,7 +14,7 @@ public class Conector {
         return tipoConector;
     }
 
-    public String getExpresion() {
+    public Expresion getExpresion() {
         return expresion;
     }
 }

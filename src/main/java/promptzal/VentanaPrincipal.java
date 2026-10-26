@@ -6,7 +6,8 @@ package promptzal;
 
 import analizador.LexerPromptZal;
 import analizador.Parser;
-import modelos.ErrorLexico;
+import ast.Programa;
+import modelos.ErrorCompilacion;
 import modelos.Token;
 import utilidades.ManejadorArchivos;
 import javax.swing.JFileChooser;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import semantico.AnalizadorSemantico;
 
 /**
  *
@@ -38,7 +40,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private String rutaArchivoActual;
     private ManejadorArchivos manejador;
     private List<Token> ultimosTokens;
-    private List<ErrorLexico> ultimosErrores;
+    private List<ErrorCompilacion> ultimosErrores;
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(VentanaPrincipal.class.getName());
 
@@ -111,7 +113,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         tablaErrores.getTableHeader().setForeground(Color.WHITE);
     }
 
-    public void aplicarColoresSintaxis(JTextPane editor, List<Token> tokens, List<ErrorLexico> errores, List<Token> comentarios) {
+    public void aplicarColoresSintaxis(JTextPane editor, List<Token> tokens, List<ErrorCompilacion> errores, List<Token> comentarios) {
         StyledDocument doc = editor.getStyledDocument();
 
         // --- DEFINICIÓN DE LA PALETA DE COLORES ---
@@ -219,7 +221,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                     estiloAplicar = estiloComentario;
                     break;
             }
-            for (ErrorLexico e : errores) {
+            for (ErrorCompilacion e : errores) {
                 try {
                     int offsetInicioLinea = root.getElement(e.getFila() - 1).getStartOffset();
                     int offsetAbsoluto = offsetInicioLinea + (e.getColumna() - 1);
@@ -421,12 +423,20 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
             // Ejecución del análisis sintáctico con los tokens obtenidos
             Parser parser = new Parser(lexer.getTokens());
-            parser.parsePrograma();
+            Programa programaAST = parser.parsePrograma();
 
-            // Combinación de errores léxicos y sintácticos
-            List<ErrorLexico> todosLosErrores = new ArrayList<>();
+            //Ejecución del análisis semántico (Tabla de Símbolos)
+            AnalizadorSemantico semantico = new AnalizadorSemantico(programaAST);
+            semantico.analizar();
+
+            //Combinación de todos los errores (Léxicos, Sintácticos y Semánticos)
+            List<ErrorCompilacion> todosLosErrores = new ArrayList<>();
             todosLosErrores.addAll(lexer.getErrores());
             todosLosErrores.addAll(parser.getErroresSintacticos());
+            todosLosErrores.addAll(semantico.getTabla().getErroresSemanticos());
+            
+            ultimosTokens = lexer.getTokens(); 
+            ultimosErrores = todosLosErrores;
             
             // Guardado para reportes HTML
             ultimosTokens = lexer.getTokens(); 
@@ -435,7 +445,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             //Llenado de la tabla de Errores con la lista combinada
             DefaultTableModel modeloErrores = (DefaultTableModel) tablaErrores.getModel();
             modeloErrores.setRowCount(0);
-            for (ErrorLexico e : todosLosErrores) {
+            for (ErrorCompilacion e : todosLosErrores) {
                 modeloErrores.addRow(new Object[]{e.getId(), e.getLexema(), e.getDescripcion(), e.getFila(), e.getColumna()});
             }
 

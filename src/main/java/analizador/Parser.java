@@ -5,6 +5,7 @@ import modelos.Token;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
+import ast.*;
 
 public class Parser {
 
@@ -104,116 +105,193 @@ public class Parser {
     }
 
     // Regla: <agente> -> AGENTE ID LLAVE_A <contexto> <variables> <comandos> LLAVE_C
-    private void parseAgente() {
+    private Agente parseAgente() {
         match("AGENTE");
+        String nombre = "";
+        if (tokenActual != null && tokenActual.getTipo().equals("ID")) {
+            nombre = tokenActual.getLexema();
+        }
         match("ID");
         match("LLAVE_A");
-        parseContexto();
-        parseVariables();
-        parseComandos();
+
+        String contexto = parseContexto();
+        List<Variable> variables = parseVariables();
+        List<Comando> comandos = parseComandos();
+
         match("LLAVE_C");
+
+        return new Agente(nombre, contexto, variables, comandos);
     }
 
     // Regla: <contexto> -> CONTEXTO IGUAL CADENA
-    private void parseContexto() {
+    private String parseContexto() {
         match("CONTEXTO");
         match("IGUAL");
+        String valor = "";
+        if (tokenActual != null && tokenActual.getTipo().equals("CADENA")) {
+            valor = tokenActual.getLexema();
+        }
+
         match("CADENA");
+
+        return valor;
     }
 
     // Regla: <variables> -> VARIABLE ID IGUAL <expresion> <variables> | ε
-    private void parseVariables() {
+    private List<Variable> parseVariables() {
+        List<Variable> listaVariables = new ArrayList<>();
+
         if (tokenActual != null && tokenActual.getTipo().equals("VARIABLE")) {
             match("VARIABLE");
+            String nombre = "";
+            if (tokenActual.getTipo().equals("ID")) {
+                nombre = tokenActual.getLexema();
+            }
             match("ID");
             match("IGUAL");
-            parseExpresion();
-            parseVariables();
+
+            String valor = parseExpresion();
+
+            listaVariables.add(new Variable(nombre, valor));
+            listaVariables.addAll(parseVariables());
         }
+
+        // Si entra por la rama Épsilon, simplemente devuelve la lista vacía
+        return listaVariables;
     }
 
     // Regla: <comandos> -> <comando> <mas_comandos>
-    private void parseComandos() {
-        parseComando();
-        parseMasComandos();
+    private List<Comando> parseComandos() {
+        List<Comando> listaComandos = new ArrayList<>();
+        listaComandos.add(parseComando()); // El primer comando es obligatorio
+        listaComandos.addAll(parseMasComandos());
+        return listaComandos;
     }
 
     // Regla: <mas_comandos> -> <comando> <mas_comandos> | ε
-    private void parseMasComandos() {
+    private List<Comando> parseMasComandos() {
+        List<Comando> lista = new ArrayList<>();
         if (tokenActual != null && tokenActual.getTipo().equals("COMANDO_IA")) {
-            parseComando();
-            parseMasComandos();
+            lista.add(parseComando());
+            lista.addAll(parseMasComandos());
         }
+        return lista; // Si es Épsilon, devuelve la lista vacía
     }
 
     // Regla: <comando> -> COMANDO_IA <expresion> <conectores> FLECHA ID
-    private void parseComando() {
+    private Comando parseComando() {
+        // atrapa el tipo de instrucción (PREGUNTAR, GENERAR, etc.)
+        String tipoInstruccion = "";
+        if (tokenActual != null && tokenActual.getTipo().equals("COMANDO_IA")) {
+            tipoInstruccion = tokenActual.getLexema();
+        }
         match("COMANDO_IA");
-        parseExpresion();
-        parseConectores();
+        
+        // atrapa el argumento principal
+        String expresionBase = parseExpresion();
+        
+        // atrapa todos los conectores extra
+        List<Conector> conectores = parseConectores();
+        
         match("FLECHA");
+        
+        // atrapa dónde se guarda el resultado
+        String variableDestino = "";
+        if (tokenActual != null && tokenActual.getTipo().equals("ID")) {
+            variableDestino = tokenActual.getLexema();
+        }
         match("ID");
+        
+        // retorna el nodo Comando ya armado
+        return new Comando(tipoInstruccion, expresionBase, conectores, variableDestino);
     }
 
     // Regla: <conectores> -> CONECTOR <expresion> <conectores> | ε
-    private void parseConectores() {
+    private List<Conector> parseConectores() {
+        List<Conector> lista = new ArrayList<>();
         if (tokenActual != null && tokenActual.getTipo().equals("CONECTOR")) {
+            // atrapa la palabra (SOBRE, DESDE, EN...)
+            String tipo = tokenActual.getLexema(); 
             match("CONECTOR");
-            parseExpresion();
-            parseConectores();
+            
+            // atrapa el valor que acompaña al conector
+            String expresion = parseExpresion(); 
+            
+            lista.add(new Conector(tipo, expresion));
+            lista.addAll(parseConectores());
         }
+        return lista;
     }
 
     // Regla: <expresion> -> <termino> <mas_terminos>
-    private void parseExpresion() {
-        parseTermino();
-        parseMasTerminos();
+    private String parseExpresion() {
+        String termino = parseTermino();
+        String masTerminos = parseMasTerminos();
+        // concatena las partes en un solo texto (por ejemplo "100" + " palabras")
+        return termino + masTerminos; 
     }
 
     // Regla: <mas_terminos> -> MAS <termino> <mas_terminos> | ε
-    private void parseMasTerminos() {
+    private String parseMasTerminos() {
         if (tokenActual != null && tokenActual.getTipo().equals("MAS")) {
             match("MAS");
-            parseTermino();
-            parseMasTerminos();
+            String termino = parseTermino();
+            String masTerminos = parseMasTerminos();
+            // se le agrega el ' + ' literal para que el texto sea legible
+            return " + " + termino + masTerminos;
         }
+        return "";
     }
 
     // Regla: <termino> -> CADENA | ID | NUMERO <unidad> | <cargar>
-    private void parseTermino() {
-        if (tokenActual == null) {
-            return;
-        }
+    private String parseTermino() {
+        if (tokenActual == null) return "";
 
         String tipo = tokenActual.getTipo();
+        String valor = "";
 
-        if (tipo.equals("CADENA")) {
-            match("CADENA");
-        } else if (tipo.equals("ID")) {
-            match("ID");
+        if (tipo.equals("CADENA") || tipo.equals("ID")) {
+            valor = tokenActual.getLexema();
+            match(tipo);
         } else if (tipo.equals("NUMERO")) {
+            valor = tokenActual.getLexema();
             match("NUMERO");
-            parseUnidad();
+            valor += parseUnidad(); // se le pega la unidad si es que trae
         } else if (tipo.equals("CARGAR")) {
-            parseCargar();
+            valor = parseCargar();
         } else {
             manejarErrorSintactico("CADENA, ID, NUMERO o CARGAR");
         }
+        return valor;
     }
 
     // Regla: <unidad> -> ID | ε
-    private void parseUnidad() {
+    private String parseUnidad() {
         if (tokenActual != null && tokenActual.getTipo().equals("ID")) {
+            String unidad = tokenActual.getLexema();
             match("ID");
+            return " " + unidad; 
         }
+        return "";
     }
 
     // Regla: <cargar> -> CARGAR PAR_A CADENA PAR_C
-    private void parseCargar() {
+    private String parseCargar() {
         match("CARGAR");
         match("PAR_A");
-        match("CADENA");
+        
+        String archivo = "";
+        // soporta la regla flexible (ID o CADENA)
+        if (tokenActual != null && (tokenActual.getTipo().equals("CADENA") || tokenActual.getTipo().equals("ID"))) {
+            archivo = tokenActual.getLexema();
+            if (tokenActual.getTipo().equals("CADENA")) match("CADENA");
+            else match("ID");
+        } else {
+            manejarErrorSintactico("CADENA o ID");
+        }
+        
         match("PAR_C");
+        return "CARGAR(" + archivo + ")"; // Guarda la instrucción como texto
     }
 
     // Regla: <ejecuciones> -> EJECUTAR ID <mas_ejecuciones>

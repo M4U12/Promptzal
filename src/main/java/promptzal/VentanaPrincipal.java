@@ -1,48 +1,43 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package promptzal;
 
 import analizador.LexerPromptZal;
 import analizador.Parser;
 import ast.Programa;
+import semantico.AnalizadorSemantico;
 import generador.Generador;
 import modelos.ErrorCompilacion;
 import modelos.Token;
 import utilidades.ManejadorArchivos;
+import utilidades.GeneradorReportes;
+
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import java.io.File;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import modelos.Tipos;
-import utilidades.GeneradorReportes;
-/*import utilidades.GraficadorAFD;*/
 import javax.swing.JTextPane;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.Element;
+import javax.swing.JButton;
 import java.awt.Color;
+import java.io.File;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import semantico.AnalizadorSemantico;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
-/**
- *
- * @author ACER
- */
 public class VentanaPrincipal extends javax.swing.JFrame {
 
     private String rutaArchivoActual;
     private ManejadorArchivos manejador;
     private List<Token> ultimosTokens;
     private List<ErrorCompilacion> ultimosErrores;
+    private Programa ultimoAST;
+    private AnalizadorSemantico ultimoSemantico;
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(VentanaPrincipal.class.getName());
 
@@ -59,8 +54,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     public void configurarTablas() {
         String[] columnasTokens = {"ID", "Lexema", "Tipo", "Fila", "Columna"};
         tablaTokens.setModel(new DefaultTableModel(null, columnasTokens));
-
-        String[] columnasErrores = {"ID", "Carácter/Lexema", "Descripción", "Fila", "Columna"};
+        String[] columnasErrores = {"ID", "Tipo", "Lexema/Carácter", "Descripción", "Fila", "Columna"};
         tablaErrores.setModel(new DefaultTableModel(null, columnasErrores));
     }
 
@@ -76,13 +70,13 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         txtEditor.setForeground(new Color(169, 183, 198)); // Texto por defecto gris claro
         txtEditor.setCaretColor(Color.WHITE); // Hace que el cursor titilante sea blanco
 
-        // 3. Estilo de los Botones 
+        //Estilo de los Botones 
         Color colorBoton = new Color(77, 77, 77);
-        JButton[] botones = {btnAbrir, btnAnalizar, btnGuardar, btnReportes};
+        JButton[] botones = {btnAbrir, btnCompilar, btnGuardar, btnReportes, btnAST};
         for (JButton btn : botones) {
             btn.setBackground(colorBoton);
             btn.setForeground(Color.WHITE);
-            btn.setFocusPainted(false); 
+            btn.setFocusPainted(false);
             btn.setBorderPainted(false);
         }
 
@@ -90,10 +84,10 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         Color colorFondoTabla = new Color(60, 63, 65);
         Color colorTextoTabla = new Color(187, 187, 187);
 
-        // 5. Eliminar los bordes blancos feos de los paneles de desplazamiento
-        jScrollPane2.setBorder(javax.swing.BorderFactory.createEmptyBorder());
-        jScrollPane3.setBorder(javax.swing.BorderFactory.createEmptyBorder());
-        jScrollPane4.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        //Eliminar los bordes blancos de los paneles de desplazamiento
+        jScrollPane2.setBorder(BorderFactory.createEmptyBorder());
+        jScrollPane3.setBorder(BorderFactory.createEmptyBorder());
+        jScrollPane4.setBorder(BorderFactory.createEmptyBorder());
 
         // Estilizar el panel de pestañas 
         tabbedPane.setBorder(javax.swing.BorderFactory.createEmptyBorder());
@@ -165,7 +159,6 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         Element root = doc.getDefaultRootElement();
         for (Token t : tokens) {
             Style estiloAplicar = estiloNormal;
-
             switch (t.getTipo()) {
                 case "AGENTE":
                 case "CONTEXTO":
@@ -174,36 +167,24 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 case "EXPORTAR":
                     estiloAplicar = estiloReservada;
                     break;
-
-                // Comandos IA y Funciones
                 case "COMANDO_IA":
                     estiloAplicar = estiloComando;
                     break;
                 case "CARGAR":
                     estiloAplicar = estiloFuncion;
                     break;
-
-                // Directivas
                 case "DIRECTIVA":
                     estiloAplicar = estiloDirectiva;
                     break;
-
-                // Conectores
                 case "CONECTOR":
                     estiloAplicar = estiloConector;
                     break;
-
-                // Cadenas
                 case "CADENA":
                     estiloAplicar = estiloCadena;
                     break;
-
-                // Números
                 case "NUMERO":
                     estiloAplicar = estiloNumero;
                     break;
-
-                // Símbolos y operadores 
                 case "FLECHA":
                 case "IGUAL":
                 case "MAS":
@@ -214,8 +195,6 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 case "COMA":
                     estiloAplicar = estiloSimbolo;
                     break;
-
-                // Identificadores y comentarios
                 case "ID":
                     estiloAplicar = estiloIdentificador;
                     break;
@@ -223,30 +202,70 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                     estiloAplicar = estiloComentario;
                     break;
             }
-            for (ErrorCompilacion e : errores) {
-                try {
-                    int offsetInicioLinea = root.getElement(e.getFila() - 1).getStartOffset();
-                    int offsetAbsoluto = offsetInicioLinea + (e.getColumna() - 1);
-                    doc.setCharacterAttributes(offsetAbsoluto, e.getLexema().length(), estiloError, true);
-                } catch (Exception ex) {
-                }
-            }
-            for (Token c : comentarios) {
-                try {
-                    int offsetInicioLinea = root.getElement(c.getFila() - 1).getStartOffset();
-                    int offsetAbsoluto = offsetInicioLinea + (c.getColumna() - 1);
-                    doc.setCharacterAttributes(offsetAbsoluto, c.getLexema().length(), estiloComentario, true);
-                } catch (Exception ex) {
-                }
-            }
-
             try {
-                int offsetInicioLinea = root.getElement(t.getFila() - 1).getStartOffset();
-                int offsetAbsoluto = offsetInicioLinea + (t.getColumna() - 1);
+                int offsetAbsoluto = root.getElement(t.getFila() - 1).getStartOffset() + (t.getColumna() - 1);
                 doc.setCharacterAttributes(offsetAbsoluto, t.getLexema().length(), estiloAplicar, true);
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
         }
+
+        for (ErrorCompilacion e : errores) {
+            try {
+                int offsetAbsoluto = root.getElement(e.getFila() - 1).getStartOffset() + (e.getColumna() - 1);
+                doc.setCharacterAttributes(offsetAbsoluto, e.getLexema().length(), estiloError, true);
+            } catch (Exception ignored) {
+            }
+        }
+        for (Token c : comentarios) {
+            try {
+                int offsetAbsoluto = root.getElement(c.getFila() - 1).getStartOffset() + (c.getColumna() - 1);
+                doc.setCharacterAttributes(offsetAbsoluto, c.getLexema().length(), estiloComentario, true);
+            } catch (Exception ignored) {
+            }
+        }
+    }
+    
+    private void mostrarPromptsGenerados(Map<String, String> prompts) {
+        javax.swing.JDialog dialogo = new javax.swing.JDialog(this, "Prompts Generados", false);
+        dialogo.setSize(700, 500);
+        dialogo.setLocationRelativeTo(this);
+        
+        JTextArea textArea = new JTextArea();
+        textArea.setEditable(false);
+        textArea.setFont(new java.awt.Font("Consolas", java.awt.Font.PLAIN, 14));
+        textArea.setBackground(new Color(43, 43, 43));
+        textArea.setForeground(new Color(169, 183, 198));
+        
+        for(Map.Entry<String, String> entry : prompts.entrySet()) {
+            textArea.append("===================================================\n");
+            textArea.append(" ARCHIVO: " + entry.getKey() + ".txt\n");
+            textArea.append("===================================================\n\n");
+            textArea.append(entry.getValue() + "\n\n");
+        }
+        
+        dialogo.add(new JScrollPane(textArea));
+        dialogo.setVisible(true);
+    }
+
+    private void mostrarArbolAST() {
+        java.io.File imgFile = new java.io.File("reporte_ast.png");
+        if (!imgFile.exists()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "La imagen no se encontró. Asegurate de haberla generado en el botón de 'Reportes'", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        javax.swing.JDialog dialogo = new javax.swing.JDialog(this, "Árbol de Sintaxis Abstracta (AST)", false);
+        dialogo.setSize(900, 700);
+        dialogo.setLocationRelativeTo(this);
+        
+        javax.swing.ImageIcon icon = new javax.swing.ImageIcon(imgFile.getAbsolutePath());
+        icon.getImage().flush(); 
+        
+        javax.swing.JLabel label = new javax.swing.JLabel(icon);
+        label.setHorizontalAlignment(javax.swing.JLabel.CENTER);
+        
+        dialogo.add(new javax.swing.JScrollPane(label));
+        dialogo.setVisible(true);
     }
 
     /**
@@ -259,7 +278,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private void initComponents() {
 
         btnGuardar = new javax.swing.JButton();
-        btnAnalizar = new javax.swing.JButton();
+        btnCompilar = new javax.swing.JButton();
         btnAbrir = new javax.swing.JButton();
         btnReportes = new javax.swing.JButton();
         tabbedPane = new javax.swing.JTabbedPane();
@@ -271,19 +290,20 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         tablaErrores = new javax.swing.JTable();
         jScrollPane4 = new javax.swing.JScrollPane();
         txtEditor = new javax.swing.JTextPane();
+        btnAST = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         btnGuardar.setText("Guardar");
         btnGuardar.addActionListener(this::btnGuardarActionPerformed);
 
-        btnAnalizar.setText("Analizar");
-        btnAnalizar.addActionListener(this::btnAnalizarActionPerformed);
+        btnCompilar.setText("Compilar");
+        btnCompilar.addActionListener(this::btnCompilarActionPerformed);
 
         btnAbrir.setText("Abrir archivo");
         btnAbrir.addActionListener(this::btnAbrirActionPerformed);
 
-        btnReportes.setText("ReportesHTML");
+        btnReportes.setText("Reportes");
         btnReportes.addActionListener(this::btnReportesActionPerformed);
 
         tablaTokens.setModel(new javax.swing.table.DefaultTableModel(
@@ -342,6 +362,9 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
         jScrollPane4.setViewportView(txtEditor);
 
+        btnAST.setText("Ver AST");
+        btnAST.addActionListener(this::btnASTActionPerformed);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -350,8 +373,10 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(btnAbrir)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(btnAnalizar)
+                .addComponent(btnCompilar, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btnAST)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(btnGuardar)
                 .addGap(18, 18, 18)
                 .addComponent(btnReportes)
@@ -367,7 +392,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                     .addComponent(btnGuardar)
                     .addComponent(btnAbrir)
                     .addComponent(btnReportes)
-                    .addComponent(btnAnalizar))
+                    .addComponent(btnCompilar)
+                    .addComponent(btnAST))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 333, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -394,7 +420,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnAbrirActionPerformed
 
-    private void btnAnalizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAnalizarActionPerformed
+    private void btnCompilarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCompilarActionPerformed
         String codigo = txtEditor.getText();
         if (codigo.trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "El editor está vacío.");
@@ -402,10 +428,9 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         }
 
         try {
+            //Análisis Léxico
             StringReader reader = new StringReader(codigo);
             LexerPromptZal lexer = new LexerPromptZal(reader);
-
-            // Lee todos los tokens hasta el EOF
             while (true) {
                 Token token = lexer.yylex();
                 if (token == null || token.getTipo().equals("EOF")) {
@@ -413,66 +438,57 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 }
             }
 
-            // Pinta los colores 
+            //Coloreado
             aplicarColoresSintaxis(txtEditor, lexer.getTokens(), lexer.getErrores(), lexer.getComentarios());
 
-            // Llenar tabla de Tokens
-            DefaultTableModel modeloTokens = (DefaultTableModel) tablaTokens.getModel();
-            modeloTokens.setRowCount(0);
-            for (Token t : lexer.getTokens()) {
-                modeloTokens.addRow(new Object[]{t.getId(), t.getLexema(), t.getTipo(), t.getFila(), t.getColumna()});
-            }
-
-            // Ejecución del análisis sintáctico con los tokens obtenidos
+            //Análisis Sintáctico (AST)
             Parser parser = new Parser(lexer.getTokens());
             Programa programaAST = parser.parsePrograma();
 
-            //Ejecución del análisis semántico (Tabla de Símbolos)
+            //Análisis Semántico (Tabla de Símbolos)
             AnalizadorSemantico semantico = new AnalizadorSemantico(programaAST);
             semantico.analizar();
 
-            //Combinación de todos los errores (Léxicos, Sintácticos y Semánticos)
+            //Guarda en variables globales para los reportes
+            ultimoAST = programaAST;
+            ultimoSemantico = semantico;
+            ultimosTokens = lexer.getTokens();
+
             List<ErrorCompilacion> todosLosErrores = new ArrayList<>();
             todosLosErrores.addAll(lexer.getErrores());
             todosLosErrores.addAll(parser.getErroresSintacticos());
             todosLosErrores.addAll(semantico.getTabla().getErroresSemanticos());
-            
-            ultimosTokens = lexer.getTokens(); 
             ultimosErrores = todosLosErrores;
-            
-            // Guardado para reportes HTML
-            ultimosTokens = lexer.getTokens(); 
-            ultimosErrores = todosLosErrores; 
-            
-            if (parser.getErroresSintacticos().isEmpty() && semantico.getTabla().getErroresSemanticos().isEmpty()) {
-                
-                generador.Generador generador = new generador.Generador(programaAST);    
-                // genera el mapa 
-                Map<String, String> promptsFinales = generador.generar();          
-                // crea los archivos
-                generador.exportarArchivos(promptsFinales);
-                
-            } else {
-                System.out.println("No se generó código ni se exportó nada debido a que hay errores en el archivo.");
+
+            //Tabla Tokens
+            DefaultTableModel modeloTokens = (DefaultTableModel) tablaTokens.getModel();
+            modeloTokens.setRowCount(0);
+            for (Token t : ultimosTokens) {
+                modeloTokens.addRow(new Object[]{t.getId(), t.getLexema(), t.getTipo(), t.getFila(), t.getColumna()});
             }
 
-            //Llenado de la tabla de Errores con la lista combinada
+            //Tabla Errores 
             DefaultTableModel modeloErrores = (DefaultTableModel) tablaErrores.getModel();
             modeloErrores.setRowCount(0);
-            for (ErrorCompilacion e : todosLosErrores) {
-                modeloErrores.addRow(new Object[]{e.getId(), e.getLexema(), e.getDescripcion(), e.getFila(), e.getColumna()});
+            for (ErrorCompilacion e : ultimosErrores) {
+                modeloErrores.addRow(new Object[]{e.getId(), e.getTipoError(), e.getLexema(), e.getDescripcion(), e.getFila(), e.getColumna()});
             }
 
-            if (!todosLosErrores.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Se encontraron " + todosLosErrores.size() + " errores (Léxicos y/o Sintácticos).", "Advertencia", JOptionPane.WARNING_MESSAGE);
+            //Generación de Archivos .txt (Si no hay errores)
+            if (ultimosErrores.isEmpty()) {
+                Generador generador = new Generador(programaAST);
+                Map<String, String> promptsFinales = generador.generar();
+                generador.exportarArchivos(promptsFinales);
+                mostrarPromptsGenerados(promptsFinales);
+                JOptionPane.showMessageDialog(this, "Compilación exitosa. Código validado y archivos exportados.\nDa clic en 'Reportes' para ver el AST.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this, "Análisis Léxico y Sintáctico exitoso. No hay errores.");
+                JOptionPane.showMessageDialog(this, "Se encontraron " + ultimosErrores.size() + " errores en la compilación.\nRevisa la tabla de errores.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error al ejecutar el analizador: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Error grave al ejecutar el analizador: " + ex.getMessage());
         }
-    }//GEN-LAST:event_btnAnalizarActionPerformed
+    }//GEN-LAST:event_btnCompilarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
         if (rutaArchivoActual != null) {
@@ -496,28 +512,36 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void btnReportesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnReportesActionPerformed
-        if (ultimosTokens == null || ultimosErrores == null) {
-            JOptionPane.showMessageDialog(this, "Primero debes analizar el código para poder generar los reportes.");
+        if (ultimoAST == null || ultimoSemantico == null || ultimosErrores == null) {
+            JOptionPane.showMessageDialog(this, "Primero compila el código para poder generar los reportes.");
             return;
         }
 
-        GeneradorReportes generador = new GeneradorReportes();
-        generador.generarReporteTokensHTML(ultimosTokens);
-        generador.generarReporteErroresHTML(ultimosErrores);
-        generador.generarReporteEstadisticasHTML(ultimosTokens, ultimosErrores);
-        /*GraficadorAFD graficador = new utilidades.GraficadorAFD();
-        graficador.generarGrafo();*/
+        try {
+            GeneradorReportes generador = new GeneradorReportes();
+            generador.generarReporteErroresHTML(ultimosErrores);
+            generador.generarReporteSimbolosHTML(ultimoSemantico.getTabla().getSimbolos());
+            generador.generarReporteAST(ultimoAST);
 
-        JOptionPane.showMessageDialog(this, "¡Reportes HTML e Imagen del Autómata (grafo_afd.png) generados exitosamente en la carpeta del proyecto!");
+            JOptionPane.showMessageDialog(this, "Reporte de Errores, Tabla de Símbolos y AST generados correctamente.");
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error al generar los reportes: " + e.getMessage());
+        }
     }//GEN-LAST:event_btnReportesActionPerformed
+
+    private void btnASTActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnASTActionPerformed
+        mostrarArbolAST();
+    }//GEN-LAST:event_btnASTActionPerformed
 
     /**
      * @param args the command line arguments
      */
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnAST;
     private javax.swing.JButton btnAbrir;
-    private javax.swing.JButton btnAnalizar;
+    private javax.swing.JButton btnCompilar;
     private javax.swing.JButton btnGuardar;
     private javax.swing.JButton btnReportes;
     private javax.swing.JPanel jPane2;

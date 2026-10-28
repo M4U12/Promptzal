@@ -7,6 +7,7 @@ package promptzal;
 import analizador.LexerPromptZal;
 import analizador.Parser;
 import ast.Programa;
+import generador.Generador;
 import modelos.ErrorCompilacion;
 import modelos.Token;
 import utilidades.ManejadorArchivos;
@@ -444,14 +445,15 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             ultimosErrores = todosLosErrores; 
             
             if (parser.getErroresSintacticos().isEmpty() && semantico.getTabla().getErroresSemanticos().isEmpty()) {
-                generador.Generador generador = new generador.Generador(programaAST);
-                Map<String, String> promptsFinales = generador.generar();              
-                System.out.println("\n========== PROMPTS GENERADOS ==========\n");
-                for (String agente : promptsFinales.keySet()) {
-                    System.out.println(promptsFinales.get(agente));
-                }
+                
+                generador.Generador generador = new generador.Generador(programaAST);    
+                // genera el mapa 
+                Map<String, String> promptsFinales = generador.generar();          
+                // crea los archivos
+                generador.exportarArchivos(promptsFinales);
+                
             } else {
-                System.out.println("No se generó código debido a que hay errores en el archivo.");
+                System.out.println("No se generó código ni se exportó nada debido a que hay errores en el archivo.");
             }
 
             //Llenado de la tabla de Errores con la lista combinada

@@ -1,6 +1,8 @@
 package generador;
 
 import ast.*;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -73,6 +75,26 @@ public class Generador {
         }
 
         return promptsGenerados;
+    }
+    
+    // crea los archivos físicos .txt
+    public void exportarArchivos(Map<String, String> promptsGenerados) {
+        if (programaAST.getExportaciones().isEmpty()) return;
+
+        for (String nombreExportar : programaAST.getExportaciones()) {
+            // busca si el agente que pidieron exportar realmente fue generado
+            if (promptsGenerados.containsKey(nombreExportar)) {
+                String contenido = promptsGenerados.get(nombreExportar);
+                String nombreArchivo = nombreExportar + ".txt";
+
+                try (FileWriter writer = new FileWriter(nombreArchivo)) {
+                    writer.write(contenido);
+                    System.out.println("ÉXITO: Se exportó el archivo '" + nombreArchivo + "' correctamente.");
+                } catch (IOException e) {
+                    System.out.println("ERROR: No se pudo crear el archivo " + nombreArchivo);
+                }
+            }
+        }
     }
 
     private String generarDirectivas() {

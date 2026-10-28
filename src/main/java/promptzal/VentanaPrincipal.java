@@ -27,6 +27,7 @@ import java.awt.Color;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import semantico.AnalizadorSemantico;
@@ -441,6 +442,17 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             // Guardado para reportes HTML
             ultimosTokens = lexer.getTokens(); 
             ultimosErrores = todosLosErrores; 
+            
+            if (parser.getErroresSintacticos().isEmpty() && semantico.getTabla().getErroresSemanticos().isEmpty()) {
+                generador.Generador generador = new generador.Generador(programaAST);
+                Map<String, String> promptsFinales = generador.generar();              
+                System.out.println("\n========== PROMPTS GENERADOS ==========\n");
+                for (String agente : promptsFinales.keySet()) {
+                    System.out.println(promptsFinales.get(agente));
+                }
+            } else {
+                System.out.println("No se generó código debido a que hay errores en el archivo.");
+            }
 
             //Llenado de la tabla de Errores con la lista combinada
             DefaultTableModel modeloErrores = (DefaultTableModel) tablaErrores.getModel();

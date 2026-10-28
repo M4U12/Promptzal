@@ -10,6 +10,7 @@ utilidades\ManejadorArchivos.class
 ast\Conector.class
 utilidades\GeneradorReportes.class
 analizador\LexerPromptZal.class
+generador\Generador.class
 modelos\ErrorCompilacion.class
 ast\Comando.class
 promptzal\Promptzal.class

@@ -34,7 +34,6 @@ public class Generador {
                 prompt.append(encabezado.toString());
                 
                 prompt.append("## Agente: ").append(agenteTarget.getNombre()).append("\n");
-                // Corrección de detalle menor (Sin repetir "Actúa como:")
                 prompt.append("Contexto: ").append(agenteTarget.getContexto().replace("\"", "")).append("\n");
 
                 // Variables 
@@ -52,7 +51,7 @@ public class Generador {
                     int paso = 1;
                     for (Comando cmd : agenteTarget.getComandos()) {
                         prompt.append(paso).append(". ");
-                        prompt.append(traducirComandoALenguajeNatural(cmd));
+                        prompt.append(traducirComandoALenguajeNatural(cmd, agenteTarget));
                         prompt.append(" Guarda el resultado como ").append(cmd.getVariableDestino()).append(".\n");
                         paso++;
                     }
@@ -74,7 +73,7 @@ public class Generador {
         return promptsGenerados;
     }
 
-    private String traducirComandoALenguajeNatural(Comando cmd) {
+    private String traducirComandoALenguajeNatural(Comando cmd, Agente agenteActual) {
         boolean esGenerar = cmd.getTipoInstruccion().equals("GENERAR");
         // manda la bandera 'esGenerar' para que aplique la excepción
         String base = evaluarExpresion(cmd.getExpresionBase(), esGenerar);
@@ -104,7 +103,10 @@ public class Generador {
                 break;
             case "RESUMIR":
                 trad.append("Resume ").append(base);
-                if (!en.isEmpty()) trad.append(" en un máximo de ").append(en).append(".");
+                if (!en.isEmpty()) {
+                    String limiteReal = resolverValorVariable(en, agenteActual);
+                    trad.append(" en un máximo de ").append(limiteReal).append(".");
+                }
                 break;
             case "CLASIFICAR":
                 trad.append("Clasifica ").append(base);
@@ -121,7 +123,7 @@ public class Generador {
             default:
                 trad.append(cmd.getTipoInstruccion()).append(" ").append(base).append(".");
         }
-        return trad.toString();
+        return trad.toString().replaceAll("\\s+", " ");
     }
 
     private String evaluarExpresion(Expresion expr, boolean esGenerarBase) {
@@ -149,7 +151,8 @@ public class Generador {
                 }
             }
             else if (t.getTipo().equals("CARGAR")) {
-                String archivo = t.getValor().replace("CARGAR(", "").replace(")", "");
+                // Se reemplazan las comillas internas que trae para que no queden dobles
+                String archivo = t.getValor().replace("CARGAR(", "").replace(")", "").replace("\"", "");
                 sb.append("el contenido del archivo \"").append(archivo).append("\" (adjuntar el archivo)");
             }
 
@@ -186,5 +189,18 @@ public class Generador {
                 }
             }
         }
+    }
+    
+    private String resolverValorVariable(String posibleVariable, Agente agente) {
+        if (agente == null) return posibleVariable;
+        for (Variable var : agente.getVariables()) {
+            if (var.getNombre().equals(posibleVariable)) {
+                if (!var.getValorExpresion().getTerminos().isEmpty()) {
+                    // Devuelve el valor numérico limpio de la variable
+                    return var.getValorExpresion().getTerminos().get(0).getValor();
+                }
+            }
+        }
+        return posibleVariable; 
     }
 }

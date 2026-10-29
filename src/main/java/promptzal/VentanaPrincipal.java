@@ -56,6 +56,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         tablaTokens.setModel(new DefaultTableModel(null, columnasTokens));
         String[] columnasErrores = {"ID", "Tipo", "Lexema/Carácter", "Descripción", "Fila", "Columna"};
         tablaErrores.setModel(new DefaultTableModel(null, columnasErrores));
+        String[] columnasSimbolos = {"Nombre", "Tipo", "Ámbito", "Fila", "Columna"};
+        tablaSimbolosUI.setModel(new DefaultTableModel(null, columnasSimbolos));
     }
 
     private void aplicarTemaOscuro() {
@@ -64,6 +66,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         this.getContentPane().setBackground(fondoPrincipal);
         jPanel1.setBackground(fondoPrincipal);
         jPane2.setBackground(fondoPrincipal);
+        jPanel2.setBackground(fondoPrincipal);
 
         // Estilo del Editor
         txtEditor.setBackground(new Color(30, 30, 30));
@@ -85,14 +88,15 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         Color colorTextoTabla = new Color(187, 187, 187);
 
         //Eliminar los bordes blancos de los paneles de desplazamiento
+        jScrollPane1.setBorder(BorderFactory.createEmptyBorder());
         jScrollPane2.setBorder(BorderFactory.createEmptyBorder());
         jScrollPane3.setBorder(BorderFactory.createEmptyBorder());
         jScrollPane4.setBorder(BorderFactory.createEmptyBorder());
 
         // Estilizar el panel de pestañas 
-        tabbedPane.setBorder(javax.swing.BorderFactory.createEmptyBorder());
-        tabbedPane.setBackground(new Color(60, 63, 65)); // Fondo de las pestañas inactivas
-        tabbedPane.setForeground(Color.WHITE); // Texto de las pestañas
+        JPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        JPanel.setBackground(new Color(60, 63, 65)); // Fondo de las pestañas inactivas
+        JPanel.setForeground(Color.WHITE); // Texto de las pestañas
 
         // Tabla Tokens
         tablaTokens.setBackground(colorFondoTabla);
@@ -107,6 +111,16 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         tablaErrores.setGridColor(new Color(80, 80, 80));
         tablaErrores.getTableHeader().setBackground(fondoPrincipal);
         tablaErrores.getTableHeader().setForeground(Color.WHITE);
+        
+        txtPromptGenerado.setBackground(colorFondoTabla);
+        txtPromptGenerado.setForeground(colorTextoTabla);
+        txtPromptGenerado.setCaretColor(Color.WHITE);
+        
+        tablaSimbolosUI.setBackground(colorFondoTabla);
+        tablaSimbolosUI.setForeground(colorTextoTabla);
+        tablaSimbolosUI.setGridColor(new Color(80, 80, 80));
+        tablaSimbolosUI.getTableHeader().setBackground(fondoPrincipal);
+        tablaSimbolosUI.getTableHeader().setForeground(Color.WHITE);
     }
 
     public void aplicarColoresSintaxis(JTextPane editor, List<Token> tokens, List<ErrorCompilacion> errores, List<Token> comentarios) {
@@ -281,13 +295,19 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         btnCompilar = new javax.swing.JButton();
         btnAbrir = new javax.swing.JButton();
         btnReportes = new javax.swing.JButton();
-        tabbedPane = new javax.swing.JTabbedPane();
+        JPanel = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         tablaTokens = new javax.swing.JTable();
         jPane2 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tablaErrores = new javax.swing.JTable();
+        jPanel2 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        txtPromptGenerado = new javax.swing.JTextArea();
+        jPanel3 = new javax.swing.JPanel();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        tablaSimbolosUI = new javax.swing.JTable();
         jScrollPane4 = new javax.swing.JScrollPane();
         txtEditor = new javax.swing.JTextPane();
         btnAST = new javax.swing.JButton();
@@ -323,7 +343,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 802, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 961, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -332,7 +352,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
-        tabbedPane.addTab("Tokens", jPanel1);
+        JPanel.addTab("Tokens", jPanel1);
 
         tablaErrores.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -351,14 +371,59 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         jPane2.setLayout(jPane2Layout);
         jPane2Layout.setHorizontalGroup(
             jPane2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 802, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 961, Short.MAX_VALUE)
         );
         jPane2Layout.setVerticalGroup(
             jPane2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 252, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 307, Short.MAX_VALUE)
         );
 
-        tabbedPane.addTab("Errores", jPane2);
+        JPanel.addTab("Errores", jPane2);
+
+        txtPromptGenerado.setEditable(false);
+        txtPromptGenerado.setColumns(20);
+        txtPromptGenerado.setFont(new java.awt.Font("Consolas", 0, 14)); // NOI18N
+        txtPromptGenerado.setRows(5);
+        jScrollPane1.setViewportView(txtPromptGenerado);
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 961, Short.MAX_VALUE)
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 307, Short.MAX_VALUE)
+        );
+
+        JPanel.addTab("Prompt", jPanel2);
+
+        tablaSimbolosUI.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane5.setViewportView(tablaSimbolosUI);
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane5, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 961, Short.MAX_VALUE)
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 307, Short.MAX_VALUE)
+        );
+
+        JPanel.addTab("Tabla de Símbolos", jPanel3);
 
         jScrollPane4.setViewportView(txtEditor);
 
@@ -381,7 +446,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addComponent(btnReportes)
                 .addGap(15, 15, 15))
-            .addComponent(tabbedPane, javax.swing.GroupLayout.Alignment.TRAILING)
+            .addComponent(JPanel, javax.swing.GroupLayout.Alignment.TRAILING)
             .addComponent(jScrollPane4)
         );
         layout.setVerticalGroup(
@@ -395,9 +460,10 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                     .addComponent(btnCompilar)
                     .addComponent(btnAST))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 333, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 360, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 287, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(JPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 342, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(151, 151, 151))
         );
 
         pack();
@@ -423,6 +489,9 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private void btnCompilarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCompilarActionPerformed
         String codigo = txtEditor.getText();
         if (codigo.trim().isEmpty()) {
+            ((DefaultTableModel) tablaTokens.getModel()).setRowCount(0);
+            ((DefaultTableModel) tablaErrores.getModel()).setRowCount(0);
+            txtPromptGenerado.setText("");
             JOptionPane.showMessageDialog(this, "El editor está vacío.");
             return;
         }
@@ -473,15 +542,39 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             for (ErrorCompilacion e : ultimosErrores) {
                 modeloErrores.addRow(new Object[]{e.getId(), e.getTipoError(), e.getLexema(), e.getDescripcion(), e.getFila(), e.getColumna()});
             }
+            
+            //Tabla de Símbolos 
+            DefaultTableModel modeloSimbolos = (DefaultTableModel) tablaSimbolosUI.getModel();
+            modeloSimbolos.setRowCount(0);
+            // Iteramos sobre la lista de símbolos que ya extrajo tu Analizador Semántico
+            for (semantico.Simbolo s : ultimoSemantico.getTabla().getSimbolos()) {
+                modeloSimbolos.addRow(new Object[]{
+                    s.getNombre(), 
+                    s.getTipo(), 
+                    s.getAmbito(), 
+                    s.getFila(), 
+                    s.getColumna()
+                });
+            }
 
             //Generación de Archivos .txt (Si no hay errores)
             if (ultimosErrores.isEmpty()) {
-                Generador generador = new Generador(programaAST);
-                Map<String, String> promptsFinales = generador.generar();
+                Generador generador = new Generador(programaAST);    
+                Map<String, String> promptsFinales = generador.generar();          
                 generador.exportarArchivos(promptsFinales);
-                mostrarPromptsGenerados(promptsFinales);
-                JOptionPane.showMessageDialog(this, "Compilación exitosa. Código validado y archivos exportados.\nDa clic en 'Reportes' para ver el AST.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                StringBuilder promptsCompletos = new StringBuilder();
+                for(Map.Entry<String, String> entry : promptsFinales.entrySet()) {
+                    promptsCompletos.append("===================================================\n");
+                    promptsCompletos.append(" ARCHIVO: ").append(entry.getKey()).append(".txt\n");
+                    promptsCompletos.append("===================================================\n\n");
+                    promptsCompletos.append(entry.getValue()).append("\n\n");
+                }
+                txtPromptGenerado.setText(promptsCompletos.toString());
+                JPanel.setSelectedIndex(2); 
+                
+                JOptionPane.showMessageDialog(this, "Compilación exitosa. Código validado y prompt generado.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             } else {
+                txtPromptGenerado.setText("No se pudo generar el prompt debido a errores de compilación.");
                 JOptionPane.showMessageDialog(this, "Se encontraron " + ultimosErrores.size() + " errores en la compilación.\nRevisa la tabla de errores.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }
 
@@ -539,6 +632,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
      */
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTabbedPane JPanel;
     private javax.swing.JButton btnAST;
     private javax.swing.JButton btnAbrir;
     private javax.swing.JButton btnCompilar;
@@ -546,12 +640,17 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private javax.swing.JButton btnReportes;
     private javax.swing.JPanel jPane2;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JTabbedPane tabbedPane;
+    private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JTable tablaErrores;
+    private javax.swing.JTable tablaSimbolosUI;
     private javax.swing.JTable tablaTokens;
     private javax.swing.JTextPane txtEditor;
+    private javax.swing.JTextArea txtPromptGenerado;
     // End of variables declaration//GEN-END:variables
 }

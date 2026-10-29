@@ -69,6 +69,15 @@ public class TablaSimbolos {
         }
         return false;
     }
+    
+    public boolean existeVariableGlobalmente(String nombre) {
+        for (Simbolo s : simbolos) {
+            if (s.getTipo().equals("VARIABLE") && s.getNombre().equals(nombre)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private void agregarError(String lexema, String descripcion, int fila, int columna) {
         erroresSemanticos.add(new ErrorCompilacion(

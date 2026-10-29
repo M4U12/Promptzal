@@ -64,7 +64,13 @@ public class Parser {
                 filaError,
                 colError
         ));
-
+        
+        // Forza el avance de al menos un token siempre para no quedarse 
+        // atascados si el token actual resulta ser ya de sincronización
+        if (tokenActual != null && !tokenActual.getTipo().equals("EOF")) {
+            avanzar();
+        }
+        //sigue avanzando hasta encontrar el próximo lugar seguro
         while (tokenActual != null && !TOKENS_SINCRONIZACION.contains(tokenActual.getTipo()) && !tokenActual.getTipo().equals("EOF")) {
             avanzar();
         }
@@ -129,15 +135,15 @@ public class Parser {
         int fila = tokenActual != null ? tokenActual.getFila() : 0;
         int columna = tokenActual != null ? tokenActual.getColumna() : 0;
 
-        match("AGENTE");
+        if (!match("AGENTE")) return null;
 
         String nombre = "";
         if (tokenActual != null && tokenActual.getTipo().equals("ID")) {
             nombre = tokenActual.getLexema();
         }
-        match("ID");
-
-        match("LLAVE_A");
+        if (!match("ID")) return null; // Si no hay nombre válido, aborta el agente
+        
+        if (!match("LLAVE_A")) return null; // Si no abre la llave, aborta
 
         String contexto = parseContexto();
         List<Variable> variables = parseVariables();
@@ -145,10 +151,6 @@ public class Parser {
 
         match("LLAVE_C");
 
-        // Si falló catastróficamente al recuperar el nombre, devolvemos null, sino armamos el nodo
-        if (nombre.isEmpty()) {
-            return null;
-        }
         return new Agente(nombre, contexto, variables, comandos, fila, columna);
     }
 
@@ -180,13 +182,17 @@ public class Parser {
             if (tokenActual != null && tokenActual.getTipo().equals("ID")) {
                 nombre = tokenActual.getLexema();
             }
-            match("ID");
+            if (!match("ID")) return lista; // Si falla el nombre, aborta esta variable
 
-            match("IGUAL");
+            if (!match("IGUAL")) return lista; // Si falla el igual, aborta esta variable
 
             Expresion valorExpresion = parseExpresion();
 
-            if (!nombre.isEmpty()) {
+            // solo si la expresión se leyó bien y no devolvió null, guarda la variable.
+            // Si falló (valorExpresion == null), simplemente la descarta, pero no hace return, 
+            // sino que deja que el código llegue al "lista.addAll(parseVariables());" 
+            // para que siga leyendo las demás variables que estén bien escritas debajo.
+            if (!nombre.isEmpty() && valorExpresion != null) {
                 lista.add(new Variable(nombre, valorExpresion, fila, columna));
             }
 
@@ -195,27 +201,23 @@ public class Parser {
         return lista;
     }
 
-    // Regla: <comandos> -> <comando> <mas_comandos>
+    // Regla: <comandos> -> <comando> <comandos> | ε
     private List<Comando> parseComandos() {
         List<Comando> lista = new ArrayList<>();
-        Comando cmd = parseComando();
-        if (cmd != null) {
-            lista.add(cmd);
-        }
-        lista.addAll(parseMasComandos());
-        return lista;
-    }
-
-    // Regla: <mas_comandos> -> <comando> <mas_comandos> | ε
-    private List<Comando> parseMasComandos() {
-        List<Comando> lista = new ArrayList<>();
+        
+        // Verificamos si realmente viene un comando (Producción Épsilon)
         if (tokenActual != null && tokenActual.getTipo().equals("COMANDO_IA")) {
             Comando cmd = parseComando();
+            
+            // Si el comando se construyó bien y no fue abortado por un error, lo agregamos
             if (cmd != null) {
                 lista.add(cmd);
             }
-            lista.addAll(parseMasComandos());
+            
+            //manda a llamar a este mismo método para leer el siguiente comando
+            lista.addAll(parseComandos());
         }
+        
         return lista;
     }
 
@@ -228,22 +230,19 @@ public class Parser {
         if (tokenActual != null && tokenActual.getTipo().equals("COMANDO_IA")) {
             tipoInstruccion = tokenActual.getLexema();
         }
-        match("COMANDO_IA");
+        if (!match("COMANDO_IA")) return null; // Si no es un comando IA válido, aborta
 
         Expresion expresionBase = parseExpresion();
         List<Conector> conectores = parseConectores();
 
-        match("FLECHA");
+        if (!match("FLECHA")) return null; // Si no hay flecha de asignación, aborta
 
         String variableDestino = "";
         if (tokenActual != null && tokenActual.getTipo().equals("ID")) {
             variableDestino = tokenActual.getLexema();
         }
-        match("ID");
+        if (!match("ID")) return null;
 
-        if (tipoInstruccion.isEmpty()) {
-            return null;
-        }
         return new Comando(tipoInstruccion, expresionBase, conectores, variableDestino, fila, columna);
     }
 
@@ -265,25 +264,33 @@ public class Parser {
     // Regla: <expresion> -> <termino> <mas_terminos>
     private Expresion parseExpresion() {
         List<Termino> listaTerminos = new ArrayList<>();
+        
         Termino termino = parseTermino();
-        if (termino != null) {
-            listaTerminos.add(termino);
+        // Si el primer término falló(ej. cadena rota), devuelve nulo
+        // para que la variable que lo llamó sepa que esta operación falló y la descarte.
+        if (termino == null) {
+            return null; 
         }
-
+        
+        listaTerminos.add(termino);
         listaTerminos.addAll(parseMasTerminos());
+        
         return new Expresion(listaTerminos);
     }
 
     // Regla: <mas_terminos> -> MAS <termino> <mas_terminos> | ε
     private List<Termino> parseMasTerminos() {
         List<Termino> lista = new ArrayList<>();
+        
         if (tokenActual != null && tokenActual.getTipo().equals("MAS")) {
             match("MAS");
+            
             Termino termino = parseTermino();
+            // Si después del MAS hay basura (ej. un punto en vez de un número), aborta.
             if (termino != null) {
                 lista.add(termino);
+                lista.addAll(parseMasTerminos());
             }
-            lista.addAll(parseMasTerminos());
         }
         return lista;
     }

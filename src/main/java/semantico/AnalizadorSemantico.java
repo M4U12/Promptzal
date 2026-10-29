@@ -58,17 +58,9 @@ public class AnalizadorSemantico {
             }
         }
 
-        // valida las Ejecuciones y Exportaciones
-        // no puede ejecutar ni exportar un agente que no existe
-        for (String nombreAgente : programaAST.getEjecuciones()) {
-            if (!tabla.existeAgente(nombreAgente)) {
-                agregarErrorEspecial(nombreAgente, "Se intenta EJECUTAR el agente '" + nombreAgente + "' pero no ha sido declarado.");
-            }
-        }
-
-        for (String nombreAgente : programaAST.getExportaciones()) {
-            if (!tabla.existeAgente(nombreAgente)) {
-                agregarErrorEspecial(nombreAgente, "Se intenta EXPORTAR el agente '" + nombreAgente + "' pero no ha sido declarado.");
+        for (String nombreExportar : programaAST.getExportaciones()) {
+            if (!tabla.existeVariableGlobalmente(nombreExportar)) {
+                agregarErrorEspecial(nombreExportar, "Se intenta EXPORTAR la variable '" + nombreExportar + "' pero no ha sido generada por ningún agente.");
             }
         }
     }

@@ -188,10 +188,10 @@ public class Parser {
 
             Expresion valorExpresion = parseExpresion();
 
-            // solo si la expresión se leyó bien y no devolvió null, guarda la variable.
-            // Si falló (valorExpresion == null), simplemente la descarta, pero no hace return, 
-            // sino que deja que el código llegue al "lista.addAll(parseVariables());" 
-            // para que siga leyendo las demás variables que estén bien escritas debajo.
+            /*solo si la expresión se leyó bien y no devolvió null, guarda la variable.
+            Si falló (valorExpresion == null), simplemente la descarta, pero no hace return, 
+            sino que deja que el código llegue al lista.addAll(parseVariables())
+            para que siga leyendo las demás variables que estén bien escritas debajo*/
             if (!nombre.isEmpty() && valorExpresion != null) {
                 lista.add(new Variable(nombre, valorExpresion, fila, columna));
             }

@@ -1,0 +1,15 @@
+@modelo "gpt-3.5"
+@rol "Tester"
+@formato "csv"
+
+AGENTE estres {
+    contexto = "Prueba de panico extremo"
+    variable num_roto = 15.5.9.2
+    variable texto_ok = "Todo bien"
+    
+    ANALIZAR
+    RESUMIR texto_ok EN 50 -> resumen
+}
+}
+EJECUTAR estres
+EXPORTAR resumen, variable_falsa

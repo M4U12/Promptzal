@@ -1,0 +1,15 @@
+@modelo "gpt-4"
+@rol "Asistente de Marketing"
+@formato "json"
+
+AGENTE markeBot {
+    contexto = "Experto en marketing digital y SEO"
+    variable info = CARGAR("metricas.csv")
+    variable limite = 100
+    
+    PREGUNTAR "Cuales son los posts mas virales?" SOBRE info -> virales
+    RESUMIR virales EN limite -> resumen_posts
+}
+
+EJECUTAR markeBot
+EXPORTAR resumen_posts, virales

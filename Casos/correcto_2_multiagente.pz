@@ -1,0 +1,22 @@
+@modelo "claude-3-opus"
+@rol "Traductor y Clasificador"
+@formato "markdown"
+
+AGENTE traductor {
+    contexto = "Traductor nativo"
+    variable doc = "Hola mundo, bienvenidos al sistema"
+    
+    TRADUCIR doc EN "ingles" -> doc_ingles
+}
+
+AGENTE clasificador {
+    contexto = "Clasificador de textos"
+    variable categorias = "saludos, despedidas, informativos"
+    variable entrada = "Welcome to the system"
+    
+    CLASIFICAR entrada EN categorias -> clase_texto
+}
+
+EJECUTAR traductor
+EJECUTAR clasificador
+EXPORTAR doc_ingles, clase_texto

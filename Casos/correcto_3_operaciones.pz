@@ -1,0 +1,18 @@
+@modelo "llama-3"
+@rol "Cientifico de Datos"
+@formato "texto plano"
+
+AGENTE dataBot {
+    contexto = "Analista de logs de sistema"
+    variable num1 = 50
+    variable num2 = 25
+    variable total = num1 + num2
+    variable logs = CARGAR("errores.log")
+    
+    EXTRAER "IPs sospechosas" DESDE logs -> ips_malas
+    ANALIZAR ips_malas SOBRE "geolocalizacion" -> reporte_geo
+    GENERAR script_python DESDE reporte_geo COMO "python" -> script_final
+}
+
+EJECUTAR dataBot
+EXPORTAR ips_malas, script_final

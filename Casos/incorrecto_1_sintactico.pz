@@ -1,0 +1,15 @@
+@modelo "gpt-4"
+@rol "Robot"
+@formato "html"
+
+AGENTE botMalo {
+    contexto = "Agente con errores lexicos y sintacticos"
+    ~ 
+    variable texto = "esta cadena se rompe
+    variable buena = "esto si funciona"
+    ^
+    PREGUNTAR "algo" SOBRE buena = mala -> destino
+}
+
+EJECUTAR botMalo
+EXPORTAR buena

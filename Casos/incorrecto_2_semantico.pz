@@ -1,0 +1,18 @@
+@modelo "gemini-1.5"
+@rol "Analista"
+@formato "pdf"
+
+AGENTE analizador {
+    contexto = "Analista financiero con errores semanticos"
+    variable x = 10
+    variable x = 20
+    
+    PREGUNTAR "Dime algo" SOBRE variable_fantasma -> respuesta
+}
+
+AGENTE analizador {
+    contexto = "Agente duplicado"
+}
+
+EJECUTAR agente_fantasma
+EXPORTAR analizador
